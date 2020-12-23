@@ -5,6 +5,11 @@ import Chat from '../core/chat'
 import {addChat, getAllChats} from '../core';
 import Message from "../core/message";
 
+export interface ChatI {
+  id: string,
+  name: string,
+  messages: Message[]
+}
 interface CreateParams {
   name: string
 }
@@ -15,19 +20,18 @@ module.exports.post = (req: Request, res: Response) => {
     throw new Error();
   }
 
-  const chat = new Chat(params.name, req.session.userId);
-  addChat(chat);
+  const chats = getAllChats();
+  if( chats.find(({name}) => name === params.name) ){
+    throw new Error();
+  } else {
+    const chat = new Chat(params.name, req.session.userId);
+    addChat(chat);
 
-  const response: ChatI = {id: chat.id, name: chat.name, messages: []}
-  res.json(response);
+    const response: ChatI = {id: chat.id, name: chat.name, messages: []}
+    res.json(response);
+  }
 }
 
-
-export interface ChatI {
-  id: string,
-  name: string,
-  messages: Message[]
-}
 interface GetResponse {
   chats: ChatI[]
 }
