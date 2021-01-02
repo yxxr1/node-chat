@@ -49,15 +49,23 @@ export default class Chat {
   }
 
   join(userId: string, userName: string | null, res: Response){
-    if (this.connections[userId] === undefined) { // auth
-      this.connections[userId] = null;
+    if (this.connections[userId] === undefined) { // not authorized in chat
+      if(true) { //auth ok
+        this.connections[userId] = null;
+
+        const message: Message = new Message(null, userId, userName, 1);
+        this._broadcast([message]);
+
+        const response: MessagesResponse = {messages: this.history}
+        res.json(response);
+      } else { // auth failed
+        res.statusCode = 403;
+        res.end('auth failed');
+      }
+    } else { // already in chat
+      const response: MessagesResponse = {messages: this.history}
+      res.json(response);
     }
-
-    const message: Message = new Message(null, userId, userName, 1);
-    this._broadcast([message]);
-
-    const response: MessagesResponse = {messages: this.history}
-    res.json(response);
   }
 
   subscribe(userId: string, res: Response){
@@ -102,13 +110,14 @@ export default class Chat {
   }
 
   quit(userId: string, userName: string | null){
+    if(this.connections[userId] !== undefined){
+      const message: Message = new Message(null, userId, userName, 2);
+      this._broadcast([message]);
+    }
     if (this.connections[userId]) {
       this._closeConnection(userId);
     }
     delete this.connections[userId];
-
-    const message: Message = new Message(null, userId, userName, 2);
-    this._broadcast([message]);
 
     return Object.keys(this.connections).length;
   }
