@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2019",
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -8,16 +8,28 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
+    "module": "commonjs",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "noEmit": true
+    "noEmit": true,
+    "rootDir": "src",
+    "baseUrl": "src",
+    "paths": {
+      "@config/*": ["config/*"],
+      "@middleware": ["middleware/index.ts"],
+      "@middleware/*": ["middleware/*"],
+      "@api": ["api/index.ts"],
+      "@api/*": ["api/*"],
+      "@core": ["core/index.ts"],
+      "@core/*": ["core/*"],
+      "@utils/*": ["utils/*"],
+      "@interfaces/*": ["interfaces/*"]
+    }
   },
   "include": [
-    "./",
-    "./api",
-    "./core",
-    "./errors",
-    "./middleware"
-  ]
+    "src"
+  ],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
 }
