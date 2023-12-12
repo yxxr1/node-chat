@@ -16,8 +16,8 @@ export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
     const chat = manager.getChat(chatId);
 
     if (chat) {
-        const response = chat.join(req.session.userId as string, req.session.name as string);
-        res.json(response);
+        const messages = chat.join(req.session.userId as string, req.session.name as string);
+        res.json({ messages });
     } else {
         throw new HttpError(404, 'Chat not found');
     }

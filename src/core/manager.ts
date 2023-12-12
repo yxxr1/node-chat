@@ -1,10 +1,15 @@
 import { nanoid } from 'nanoid';
-import { Subscribable, WatchersDictionary, ConnectionRecord } from '@interfaces/core';
+import { Subscribable, WatchersDictionary, WatcherId, WatcherCallback, UserId } from '@interfaces/core';
 import { Chat } from './chat';
+
+type Data = {
+  chats?: Partial<Chat>[];
+  deletedChatsIds?: Chat['id'][];
+};
 
 const MAIN_CHAT_NAME = 'main';
 
-class Manager implements Subscribable {
+class Manager implements Subscribable<Data> {
   chats: Chat[] = []
   _watchers: WatchersDictionary = {}
 
@@ -12,16 +17,16 @@ class Manager implements Subscribable {
     this.chats.push(new Chat(MAIN_CHAT_NAME));
   }
 
-  getChat(chatId: string) {
+  getChat(chatId: Chat['id']): Chat | undefined {
     return this.chats.find(({ id }) => id === chatId)
   }
 
-  addChat(chat: Chat) {
+  addChat(chat: Chat): void {
     this.chats.push(chat);
     this._broadcast({ chats: [{ id: chat.id, name: chat.name, messages: [] }] });
   }
 
-  deleteChat(chatId: string) {
+  deleteChat(chatId: Chat['id']): void {
     this.chats = this.chats.filter((chat) => {
       const match = chat.id === chatId && chat.name !== MAIN_CHAT_NAME;
 
@@ -34,7 +39,7 @@ class Manager implements Subscribable {
     });
   }
 
-  subscribe(userId: string, callback: ConnectionRecord['callback']) {
+  subscribe(userId: UserId, callback: WatcherCallback): WatcherId {
     const id = nanoid();
 
     this._watchers[id] = { id, userId, callback };
@@ -42,11 +47,11 @@ class Manager implements Subscribable {
     return id;
   }
 
-  unsubscribe(watcherId: string) {
+  unsubscribe(watcherId: WatcherId) {
     delete this._watchers[watcherId];
   }
 
-  closeUserWatchers(userId: string) {
+  closeUserWatchers(userId: UserId): void {
     Object.values(this._watchers).forEach(({ id, userId: watcherUserId }) => {
       if (watcherUserId === userId) {
         this._closeWatcher(id);
@@ -54,17 +59,20 @@ class Manager implements Subscribable {
     });
   }
 
-  _closeWatcher(watcherId: string, data?: { chats?: Partial<Chat>[], deletedChatsIds?: Chat['id'][] }, statusCode?: number) {
+  _closeWatcher(watcherId: WatcherId, data?: Data, statusCode?: number): void {
     if (!this._watchers[watcherId]) {
       return;
     }
 
-    this._watchers[watcherId].callback(statusCode || 200, { chats: data?.chats ?? [], deletedChatsIds: data?.deletedChatsIds ?? [] });
+    this._watchers[watcherId].callback(
+      statusCode || 200,
+      { chats: data?.chats ?? [], deletedChatsIds: data?.deletedChatsIds ?? [] },
+    );
 
     delete this._watchers[watcherId];
   }
 
-  _broadcast(data: { chats?: Partial<Chat>[], deletedChatsIds?: Chat['id'][] }) {
+  _broadcast(data: Data): void {
     Object.keys(this._watchers).forEach(watcherId => {
       this._closeWatcher(watcherId, data);
     })

@@ -1,23 +1,25 @@
 import { nanoid } from 'nanoid';
 import { HttpError } from '@utils/errors';
-import { Subscribable, WatchersDictionary, ConnectionRecord } from '@interfaces/core';
+import { Subscribable, WatchersDictionary, UserId, WatcherId, WatcherCallback } from '@interfaces/core';
 import { Message, SERVICE_TYPES } from './message'
 
-export class Chat implements Subscribable {
+type Data = Message[];
+
+export class Chat implements Subscribable<Data> {
   id: string
-  creatorId?: string
+  creatorId?: UserId
   name: string
   _watchers: WatchersDictionary = {}
-  joinedUsers: string[] = []
+  joinedUsers: UserId[] = []
   messages: Message[] = []
 
-  constructor(name: string, creatorId?: string) {
+  constructor(name: string, creatorId?: UserId) {
     this.id = nanoid();
     this.creatorId = creatorId;
     this.name = name;
   }
 
-  _closeWatcher(watcherId: string, messages?: Message[], statusCode?: number) {
+  _closeWatcher(watcherId: WatcherId, messages?: Data, statusCode?: number): void {
     if (!this._watchers[watcherId]) {
       return;
     }
@@ -26,17 +28,17 @@ export class Chat implements Subscribable {
     delete this._watchers[watcherId];
   }
 
-  _broadcast(messages: Message[]) {
+  _broadcast(messages: Data): void {
     Object.keys(this._watchers).forEach(watcherId => {
       this._closeWatcher(watcherId, messages);
     })
   }
 
-  isJoined(userId: string) {
+  isJoined(userId: UserId): boolean {
     return this.joinedUsers.includes(userId);
   }
 
-  join(userId: string, userName: string | null) {
+  join(userId: UserId, userName: string | null): Message[] {
     if (!this.isJoined(userId)) {
       this.joinedUsers.push(userId);
 
@@ -45,10 +47,10 @@ export class Chat implements Subscribable {
       this._broadcast([message]);
     }
 
-    return { messages: this.messages };
+    return this.messages;
   }
 
-  subscribe(userId: string, callback: ConnectionRecord['callback']) {
+  subscribe(userId: UserId, callback: WatcherCallback): WatcherId {
     if (this.isJoined(userId)) {
       const id = nanoid();
 
@@ -60,11 +62,11 @@ export class Chat implements Subscribable {
     }
   }
 
-  unsubscribe(watcherId: string) {
+  unsubscribe(watcherId: WatcherId): void {
     delete this._watchers[watcherId];
   }
 
-  publish(text: string, fromId: string, fromName: string | null) {
+  publish(text: string, fromId: UserId, fromName: string | null): Message {
     if (this.isJoined(fromId)) {
       const message = new Message(text, fromId, fromName);
 
@@ -78,7 +80,7 @@ export class Chat implements Subscribable {
     }
   }
 
-  closeUserWatchers(userId: string) {
+  closeUserWatchers(userId: UserId): void {
     Object.values(this._watchers).forEach(({ id, userId: watcherUserId }) => {
       if (watcherUserId === userId) {
         this._closeWatcher(id);
@@ -86,7 +88,7 @@ export class Chat implements Subscribable {
     });
   }
 
-  quit(userId: string, userName: string | null) {
+  quit(userId: UserId, userName: string | null): number {
     if (this.isJoined(userId)) {
       this.closeUserWatchers(userId);
 
@@ -102,7 +104,7 @@ export class Chat implements Subscribable {
     }
   }
 
-  _closeChat(){
+  _closeChat(): void {
     Object.keys(this._watchers).forEach(watcherId => {
       this._closeWatcher(watcherId);
     });
