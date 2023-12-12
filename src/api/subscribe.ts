@@ -1,8 +1,16 @@
 import { RequestHandler } from 'express'
 import { manager } from '@core'
 import { HttpError } from '@utils/errors';
+import { Chat, Message } from '@interfaces/api-types';
 
-export const post: RequestHandler = (req, res) => {
+type PostInput = {
+  chatId: Chat['id'];
+};
+type PostOutput = {
+  messages: Message[];
+};
+
+export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
   const { chatId } = req.body;
 
   const chat = manager.getChat(chatId);

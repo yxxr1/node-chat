@@ -43,7 +43,7 @@ export class Chat implements Subscribable {
     return this.joinedUsers.includes(userId);
   }
 
-  join(userId: string, userName: string | null, res: Response) {
+  join(userId: string, userName: string | null) {
     if (!this.isJoined(userId)) {
       this.joinedUsers.push(userId);
 
@@ -52,7 +52,7 @@ export class Chat implements Subscribable {
       this._broadcast([message]);
     }
 
-    res.json({ messages: this.messages });
+    return { messages: this.messages };
   }
 
   subscribe(userId: string, res: Response) {
@@ -74,7 +74,7 @@ export class Chat implements Subscribable {
     }
   }
 
-  publish(text: string, fromId: string, fromName: string | null, res: Response) {
+  publish(text: string, fromId: string, fromName: string | null) {
     if (this.isJoined(fromId)) {
       const message = new Message(text, fromId, fromName);
 
@@ -82,8 +82,7 @@ export class Chat implements Subscribable {
 
       this._broadcast([message]);
 
-      res.statusCode = 201;
-      res.json(message);
+      return message;
     } else {
       throw new HttpError(403, 'Not joined to this chat');
     }
@@ -97,7 +96,7 @@ export class Chat implements Subscribable {
     });
   }
 
-  quit(userId: string, userName: string | null): number {
+  quit(userId: string, userName: string | null) {
     if (this.isJoined(userId)) {
       this.closeUserConnections(userId);
 

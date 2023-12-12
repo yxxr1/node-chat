@@ -2,8 +2,17 @@ import { RequestHandler } from 'express'
 import { nanoid } from 'nanoid'
 import { HttpError } from '@utils/errors'
 import { manager } from '@core';
+import { User } from '@interfaces/api-types';
 
-export const post: RequestHandler = (req, res) => {
+type PostInput = {
+    name: User['name'] | null;
+};
+type PostOutput = User | {
+    id: null;
+    name: null;
+};
+
+export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
     const { name } = req.body;
 
     if (name === null) {
@@ -39,9 +48,11 @@ export const post: RequestHandler = (req, res) => {
     }
 }
 
-export const get: RequestHandler = (req, res) => {
+type GetOutput = User;
+
+export const get: RequestHandler<{}, GetOutput> = (req, res) => {
     res.json({
-        id: req.session.userId,
-        name: req.session.name,
+        id: req.session.userId as string,
+        name: req.session.name as string,
     })
 }

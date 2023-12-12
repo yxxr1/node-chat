@@ -1,8 +1,14 @@
 import { RequestHandler } from 'express';
 import { manager, Chat } from '@core';
 import { HttpError } from '@utils/errors';
+import { Chat as ChatType } from '@interfaces/api-types';
 
-export const post: RequestHandler = (req, res) => {
+type PostInput = {
+  name: ChatType['name'];
+};
+type PostOutput = ChatType;
+
+export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
   const { name } = req.body;
 
   if (!name || !/^[a-zA-Zа-я0-9]{3,12}$/.test(name)) {
@@ -19,7 +25,13 @@ export const post: RequestHandler = (req, res) => {
   res.json({ id: chat.id, name: chat.name, messages: [] });
 }
 
-export const get: RequestHandler = (req, res) => {
+type GetOutput = {
+  chats: ChatType[];
+  joinedChatsIds?: ChatType['id'][];
+  deletedChatsIds?: ChatType['id'][];
+};
+
+export const get: RequestHandler<{}, GetOutput, {}, { watch?: boolean }> = (req, res) => {
   const { watch } = req.query;
   const { userId } = req.session;
 
