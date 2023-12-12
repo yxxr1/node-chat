@@ -1,16 +1,13 @@
-import { Response } from 'express'
 import { nanoid } from 'nanoid';
 import { HttpError } from '@utils/errors';
-import { Subscribable, ConnectionsDictionary } from '@interfaces/core';
+import { Subscribable, WatchersDictionary, ConnectionRecord } from '@interfaces/core';
 import { Message, SERVICE_TYPES } from './message'
-
-const REQUEST_TIMEOUT = 10000;
 
 export class Chat implements Subscribable {
   id: string
   creatorId?: string
   name: string
-  connections: ConnectionsDictionary = {}
+  _watchers: WatchersDictionary = {}
   joinedUsers: string[] = []
   messages: Message[] = []
 
@@ -20,22 +17,18 @@ export class Chat implements Subscribable {
     this.name = name;
   }
 
-  _closeConnection(connectionId: string, messages?: Message[], statusCode?: number) {
-    if (!this.connections[connectionId]) {
+  _closeWatcher(watcherId: string, messages?: Message[], statusCode?: number) {
+    if (!this._watchers[watcherId]) {
       return;
     }
 
-    const { res, timerId } = this.connections[connectionId];
-    res.statusCode = statusCode || 200;
-    res.json({ messages: messages ?? [] });
-
-    clearTimeout(timerId);
-    delete this.connections[connectionId];
+    this._watchers[watcherId].callback(statusCode || 200, { messages: messages ?? [] });
+    delete this._watchers[watcherId];
   }
 
   _broadcast(messages: Message[]) {
-    Object.keys(this.connections).forEach(connectionId => {
-      this._closeConnection(connectionId, messages);
+    Object.keys(this._watchers).forEach(watcherId => {
+      this._closeWatcher(watcherId, messages);
     })
   }
 
@@ -55,23 +48,20 @@ export class Chat implements Subscribable {
     return { messages: this.messages };
   }
 
-  subscribe(userId: string, res: Response) {
+  subscribe(userId: string, callback: ConnectionRecord['callback']) {
     if (this.isJoined(userId)) {
       const id = nanoid();
-      const timerId = setTimeout(() => {
-        this._closeConnection(id, []);
-      }, REQUEST_TIMEOUT);
 
-      this.connections[id] = { id, res, timerId, userId };
+      this._watchers[id] = { id, userId, callback };
 
-      res.on('close', () => {
-        clearTimeout(timerId);
-
-        delete this.connections[id];
-      });
+      return id;
     } else {
       throw new HttpError(403, 'Not joined to this chat');
     }
+  }
+
+  unsubscribe(watcherId: string) {
+    delete this._watchers[watcherId];
   }
 
   publish(text: string, fromId: string, fromName: string | null) {
@@ -88,17 +78,17 @@ export class Chat implements Subscribable {
     }
   }
 
-  closeUserConnections(userId: string) {
-    Object.values(this.connections).forEach(({ id, userId: connectionUserId }) => {
-      if (connectionUserId === userId) {
-        this._closeConnection(id);
+  closeUserWatchers(userId: string) {
+    Object.values(this._watchers).forEach(({ id, userId: watcherUserId }) => {
+      if (watcherUserId === userId) {
+        this._closeWatcher(id);
       }
     });
   }
 
   quit(userId: string, userName: string | null) {
     if (this.isJoined(userId)) {
-      this.closeUserConnections(userId);
+      this.closeUserWatchers(userId);
 
       this.joinedUsers = this.joinedUsers.filter(joinedUserId => joinedUserId !== userId);
 
@@ -113,10 +103,10 @@ export class Chat implements Subscribable {
   }
 
   _closeChat(){
-    Object.keys(this.connections).forEach(connectionId => {
-      this._closeConnection(connectionId);
+    Object.keys(this._watchers).forEach(watcherId => {
+      this._closeWatcher(watcherId);
     });
-    this.connections = {};
+    this._watchers = {};
     this.messages = [];
     this.joinedUsers = [];
 

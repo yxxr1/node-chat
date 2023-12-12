@@ -20,9 +20,9 @@ export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
             throw new HttpError(403, 'Not authorized');
         }
 
-        manager.closeUserConnections(req.session.userId);
+        manager.closeUserWatchers(req.session.userId);
         manager.chats.forEach(chat => {
-            if (chat.joinedUsers.includes(req.session.userId as string)) {
+            if (chat.isJoined(req.session.userId as string)) {
                 chat.quit(req.session.userId as string, req.session.name as string);
             }
         });

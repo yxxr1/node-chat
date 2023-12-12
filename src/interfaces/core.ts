@@ -1,20 +1,21 @@
-import { Response } from 'express';
+type WatcherCallback = (status: number, data: any) => void;
+type WatcherId = string;
 
 export type ConnectionRecord = {
   id: string;
-  res: Response;
-  timerId: NodeJS.Timeout;
-  userId?: string;
+  callback: WatcherCallback;
+  userId: string;
 }
-export type ConnectionsDictionary = {
-  [connectionId: string]: ConnectionRecord;
+export type WatchersDictionary = {
+  [watcherId: WatcherId]: ConnectionRecord;
 }
 
 export interface Subscribable {
-  connections: ConnectionsDictionary;
+  _watchers: WatchersDictionary;
 
-  _closeConnection(connectionId: string, data?: any, statusCode?: number): void;
+  _closeWatcher(watcherId: string, data?: any, statusCode?: number): void;
   _broadcast(data: any): void;
-  closeUserConnections(userId: string): void;
-  subscribe(userId: string, res: Response): void;
+  closeUserWatchers(userId: string): void;
+  subscribe(userId: string, callback: WatcherCallback): WatcherId;
+  unsubscribe(watcherId: WatcherId): void;
 }

@@ -3,6 +3,8 @@ import { manager, Chat } from '@core';
 import { HttpError } from '@utils/errors';
 import { Chat as ChatType } from '@interfaces/api-types';
 
+const SUBSCRIBE_TIMEOUT = 30000;
+
 type PostInput = {
   name: ChatType['name'];
 };
@@ -36,7 +38,24 @@ export const get: RequestHandler<{}, GetOutput, {}, { watch?: boolean }> = (req,
   const { userId } = req.session;
 
   if (watch) {
-    manager.subscribe(userId as string, res);
+    let watcherId: string;
+
+    const timerId = setTimeout(() => {
+      res.json({ chats: [], deletedChatsIds: [] });
+      manager.unsubscribe(watcherId);
+    }, SUBSCRIBE_TIMEOUT);
+
+    res.on('close', () => {
+      clearTimeout(timerId);
+
+      manager.unsubscribe(watcherId);
+    });
+
+    watcherId = manager.subscribe(req.session.userId as string, (status, data: GetOutput) => {
+      clearTimeout(timerId);
+      res.statusCode = status;
+      res.json(data);
+    });
   } else {
     const chats = manager.chats.map(({ id, name }) => ({ id, name, messages: [] }));
     const joinedChatsIds = manager.chats
