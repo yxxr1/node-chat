@@ -35,7 +35,6 @@ type GetOutput = {
 
 export const get: RequestHandler<{}, GetOutput, {}, { watch?: boolean }> = (req, res) => {
   const { watch } = req.query;
-  const { userId } = req.session;
 
   if (watch) {
     let watcherId: string;
@@ -51,9 +50,8 @@ export const get: RequestHandler<{}, GetOutput, {}, { watch?: boolean }> = (req,
       manager.unsubscribe(watcherId);
     });
 
-    watcherId = manager.subscribe(req.session.userId as string, (status, data: GetOutput) => {
+    watcherId = manager.subscribe(req.session.userId as string, (data: Omit<GetOutput, 'joinedChatsIds'>) => {
       clearTimeout(timerId);
-      res.statusCode = status;
       res.json(data);
     });
   } else {

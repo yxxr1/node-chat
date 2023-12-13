@@ -59,15 +59,12 @@ class Manager implements Subscribable<Data> {
     });
   }
 
-  _closeWatcher(watcherId: WatcherId, data?: Data, statusCode?: number): void {
+  _closeWatcher(watcherId: WatcherId, data?: Data): void {
     if (!this._watchers[watcherId]) {
       return;
     }
 
-    this._watchers[watcherId].callback(
-      statusCode || 200,
-      { chats: data?.chats ?? [], deletedChatsIds: data?.deletedChatsIds ?? [] },
-    );
+    this._watchers[watcherId].callback({ chats: data?.chats ?? [], deletedChatsIds: data?.deletedChatsIds ?? [] });
 
     delete this._watchers[watcherId];
   }

@@ -31,9 +31,8 @@ export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
       chat.unsubscribe(watcherId);
     });
 
-    watcherId = chat.subscribe(req.session.userId as string, (status, data: PostOutput) => {
+    watcherId = chat.subscribe(req.session.userId as string, (data: PostOutput) => {
       clearTimeout(timerId);
-      res.statusCode = status;
       res.json(data);
     });
   } else {

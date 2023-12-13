@@ -19,12 +19,12 @@ export class Chat implements Subscribable<Data> {
     this.name = name;
   }
 
-  _closeWatcher(watcherId: WatcherId, messages?: Data, statusCode?: number): void {
+  _closeWatcher(watcherId: WatcherId, messages?: Data): void {
     if (!this._watchers[watcherId]) {
       return;
     }
 
-    this._watchers[watcherId].callback(statusCode || 200, { messages: messages ?? [] });
+    this._watchers[watcherId].callback( { messages: messages ?? [] });
     delete this._watchers[watcherId];
   }
 
