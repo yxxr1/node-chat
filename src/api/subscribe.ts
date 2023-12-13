@@ -7,34 +7,46 @@ const SUBSCRIBE_TIMEOUT = 10000;
 
 type PostInput = {
   chatId: Chat['id'];
+  lastMessageId?: Message['id'] | null;
 };
 type PostOutput = {
   messages: Message[];
 };
 
 export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
-  const { chatId } = req.body;
+  const { chatId, lastMessageId } = req.body;
 
   const chat = manager.getChat(chatId);
 
   if (chat) {
-    let watcherId: string;
+    let unreceivedMessages: Message[] = [];
 
-    const timerId = setTimeout(() => {
-      res.json({ messages: [] });
-      chat.unsubscribe(watcherId);
-    }, SUBSCRIBE_TIMEOUT);
+    if (lastMessageId) {
+      const lastMessageIndex = chat.messages.findIndex(({ id }) => id === lastMessageId);
+      unreceivedMessages = lastMessageIndex === -1 ? [] : chat.messages.slice(lastMessageIndex + 1);
+    }
 
-    res.on('close', () => {
-      clearTimeout(timerId);
+    if (unreceivedMessages.length) {
+      res.json({ messages: unreceivedMessages });
+    } else {
+      let watcherId: string;
 
-      chat.unsubscribe(watcherId);
-    });
+      const timerId = setTimeout(() => {
+        res.json({ messages: [] });
+        chat.unsubscribe(watcherId);
+      }, SUBSCRIBE_TIMEOUT);
 
-    watcherId = chat.subscribe(req.session.userId as string, (data: PostOutput) => {
-      clearTimeout(timerId);
-      res.json(data);
-    });
+      res.on('close', () => {
+        clearTimeout(timerId);
+
+        chat.unsubscribe(watcherId);
+      });
+
+      watcherId = chat.subscribe(req.session.userId as string, (data: PostOutput) => {
+        clearTimeout(timerId);
+        res.json(data);
+      });
+    }
   } else {
     throw new HttpError(404, 'Chat not found');
   }
