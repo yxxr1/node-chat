@@ -3,6 +3,8 @@ import { manager } from '@core'
 import { HttpError } from '@utils/errors';
 import { Chat, Message } from '@interfaces/api-types';
 
+const MAX_MESSAGE_LENGTH = 1024;
+
 type PostInput = {
   chatId: Chat['id'];
   message: string;
@@ -10,7 +12,12 @@ type PostInput = {
 type PostOutput = Message;
 
 export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
-  const { chatId, message } = req.body;
+  const { chatId } = req.body;
+  const message = req.body.message.trim();
+
+  if (!message.length || message.length > MAX_MESSAGE_LENGTH) {
+    throw new HttpError(400, 'Incorrect message');
+  }
 
   const chat = manager.getChat(chatId);
 
