@@ -1,6 +1,7 @@
 import { RequestHandler } from 'express';
 import { manager, Chat } from '@core';
 import { HttpError } from '@utils/errors';
+import { validateName } from '@utils/validation';
 import { Chat as ChatType } from '@interfaces/api-types';
 
 const SUBSCRIBE_TIMEOUT = 30000;
@@ -13,7 +14,7 @@ type PostOutput = ChatType;
 export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
   const { name } = req.body;
 
-  if (!name || !/^[a-zA-Zа-я0-9]{3,12}$/.test(name)) {
+  if (!validateName(name)) {
     throw new HttpError(403, 'Invalid name');
   }
 

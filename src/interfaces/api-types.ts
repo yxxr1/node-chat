@@ -1,6 +1,11 @@
+export type UserSettings = {
+  connectionMethod: 'http' | 'ws';
+};
+
 export type User = {
   id: string;
   name: string;
+  settings: UserSettings
 };
 
 export type Message = {

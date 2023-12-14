@@ -1,58 +1,44 @@
 import { RequestHandler } from 'express'
-import { nanoid } from 'nanoid'
-import { HttpError } from '@utils/errors'
-import { manager } from '@core';
-import { User } from '@interfaces/api-types';
+import { User, UserSettings } from '@interfaces/api-types';
+import { validateName } from '@utils/validation';
 
 type PostInput = {
-    name: User['name'] | null;
+    name?: User['name'] | null;
+    settings?: UserSettings;
 };
-type PostOutput = User | {
-    id: null;
-    name: null;
-};
+type PostOutput = User;
 
 export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
-    const { name } = req.body;
+    const { name, settings } = req.body;
 
-    if (name === null) {
-        if (!req.session.userId) {
-            throw new HttpError(403, 'Not authorized');
-        }
-
-        manager.closeUserWatchers(req.session.userId);
-        manager.chats.forEach(chat => {
-            if (chat.isJoined(req.session.userId as string)) {
-                chat.quit(req.session.userId as string, req.session.name as string);
-            }
-        });
-
-        req.session.destroy(() => {
-            res.json({ id: null, name: null });
-        });
-    } else {
-        if (req.session.userId) {
-            throw new HttpError(403, 'Already authorized');
-        }
-
-        if (!name || !/^[a-zA-Zа-я0-9]{3,12}$/.test(name)) {
-            throw new HttpError(403, 'Invalid name');
-        }
-
-        const id = nanoid();
-
-        req.session.userId = id;
+    if (validateName(name)) {
         req.session.name = name;
-
-        res.json({ id, name });
     }
-}
+
+    if (settings) {
+        const { connectionMethod } = settings;
+
+        if (connectionMethod === 'http' || connectionMethod === 'ws') {
+            req.session.settings = {
+                ...req.session.settings,
+                connectionMethod,
+            };
+        }
+    }
+
+    res.json({
+        id: req.session.userId as User['id'],
+        name: req.session.name as User['name'],
+        settings: req.session.settings as UserSettings,
+    });
+};
 
 type GetOutput = User;
 
 export const get: RequestHandler<{}, GetOutput> = (req, res) => {
     res.json({
-        id: req.session.userId as string,
-        name: req.session.name as string,
+        id: req.session.userId as User['id'],
+        name: req.session.name as User['name'],
+        settings: req.session.settings as UserSettings,
     })
 }
