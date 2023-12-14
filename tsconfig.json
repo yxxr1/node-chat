@@ -13,17 +13,18 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "rootDir": "src",
-    "baseUrl": "src",
     "paths": {
-      "@config/*": ["config/*"],
-      "@middleware": ["middleware/index.ts"],
-      "@middleware/*": ["middleware/*"],
-      "@api": ["api/index.ts"],
-      "@api/*": ["api/*"],
-      "@core": ["core/index.ts"],
-      "@core/*": ["core/*"],
-      "@utils/*": ["utils/*"],
-      "@interfaces/*": ["interfaces/*"]
+      "@config/*": ["src/config/*"],
+      "@middleware": ["src/middleware/index.ts"],
+      "@middleware/*": ["src/middleware/*"],
+      "@api": ["src/api/index.ts"],
+      "@api/*": ["src/api/*"],
+      "@core": ["src/core/index.ts"],
+      "@core/*": ["src/core/*"],
+      "@utils/*": ["src/utils/*"],
+      "@interfaces/*": ["src/interfaces/*"],
+      "@ws": ["src/ws/index.ts"],
+      "@ws/*": ["src/ws/*"]
     }
   },
   "include": [
