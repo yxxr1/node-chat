@@ -1,6 +1,7 @@
 import { RequestHandler } from 'express'
 import { User, UserSettings } from '@interfaces/api-types';
 import { validateName } from '@utils/validation';
+import { CONNECTION_METHODS } from '@const/settings';
 
 type PostInput = {
     name?: User['name'] | null;
@@ -18,7 +19,7 @@ export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
     if (settings) {
         const { connectionMethod } = settings;
 
-        if (connectionMethod === 'http' || connectionMethod === 'ws') {
+        if (connectionMethod === CONNECTION_METHODS.HTTP || connectionMethod === CONNECTION_METHODS.WS) {
             req.session.settings = {
                 ...req.session.settings,
                 connectionMethod,

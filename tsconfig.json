@@ -24,7 +24,8 @@
       "@utils/*": ["src/utils/*"],
       "@interfaces/*": ["src/interfaces/*"],
       "@ws": ["src/ws/index.ts"],
-      "@ws/*": ["src/ws/*"]
+      "@ws/*": ["src/ws/*"],
+      "@const/*": ["src/const/*"],
     }
   },
   "include": [

@@ -47,18 +47,17 @@ export const get: RequestHandler<{}, GetOutput, {}, { watch?: boolean }> = (req,
 
     res.on('close', () => {
       clearTimeout(timerId);
-
       manager.unsubscribe(watcherId);
     });
 
-    watcherId = manager.subscribe(req.session.userId as string, (data: Omit<GetOutput, 'joinedChatsIds'>) => {
+    watcherId = manager.subscribe(req.session.userId as string, (data) => {
       clearTimeout(timerId);
       res.json(data);
+      manager.unsubscribe(watcherId);
     });
   } else {
     const chats = manager.chats.map(({ id, name }) => ({ id, name, messages: [] }));
-    const joinedChatsIds = manager.chats
-      .filter(({ joinedUsers }) => joinedUsers.includes(req.session.userId as string)).map(({ id }) => id);
+    const joinedChatsIds = manager.getUserJoinedChats(req.session.userId as string).map(({ id }) => id);
     res.json({ chats, joinedChatsIds });
   }
 }

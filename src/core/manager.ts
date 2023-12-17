@@ -1,15 +1,16 @@
 import { nanoid } from 'nanoid';
 import { Subscribable, WatchersDictionary, WatcherId, WatcherCallback, UserId } from '@interfaces/core';
+import { Chat as ChatType } from '@interfaces/api-types';
 import { Chat } from './chat';
 
-type Data = {
-  chats?: Partial<Chat>[];
-  deletedChatsIds?: Chat['id'][];
+export type ManagerSubscribeData = {
+  chats: ChatType[];
+  deletedChatsIds: ChatType['id'][];
 };
 
 const MAIN_CHAT_NAME = 'main';
 
-class Manager implements Subscribable<Data> {
+class Manager implements Subscribable<ManagerSubscribeData> {
   chats: Chat[] = []
   _watchers: WatchersDictionary = {}
 
@@ -39,7 +40,11 @@ class Manager implements Subscribable<Data> {
     });
   }
 
-  subscribe(userId: UserId, callback: WatcherCallback): WatcherId {
+  getUserJoinedChats(userId: UserId) {
+    return this.chats.filter(chat => chat.isJoined(userId));
+  }
+
+  subscribe(userId: UserId, callback: WatcherCallback<ManagerSubscribeData>): WatcherId {
     const id = nanoid();
 
     this._watchers[id] = { id, userId, callback };
@@ -54,24 +59,24 @@ class Manager implements Subscribable<Data> {
   closeUserWatchers(userId: UserId): void {
     Object.values(this._watchers).forEach(({ id, userId: watcherUserId }) => {
       if (watcherUserId === userId) {
-        this._closeWatcher(id);
+        this._callWatcher(id, null);
+        this.unsubscribe(id);
       }
     });
   }
 
-  _closeWatcher(watcherId: WatcherId, data?: Data): void {
-    if (!this._watchers[watcherId]) {
-      return;
+  _callWatcher(watcherId: WatcherId, data?: Partial<ManagerSubscribeData> | null): void {
+    if (this._watchers[watcherId]) {
+      this._watchers[watcherId].callback(
+        { chats: data?.chats ?? [], deletedChatsIds: data?.deletedChatsIds ?? [] },
+        data === null,
+      );
     }
-
-    this._watchers[watcherId].callback({ chats: data?.chats ?? [], deletedChatsIds: data?.deletedChatsIds ?? [] });
-
-    delete this._watchers[watcherId];
   }
 
-  _broadcast(data: Data): void {
+  _broadcast(data: Partial<ManagerSubscribeData>): void {
     Object.keys(this._watchers).forEach(watcherId => {
-      this._closeWatcher(watcherId, data);
+      this._callWatcher(watcherId, data);
     })
   }
 }

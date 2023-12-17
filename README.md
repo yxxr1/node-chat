@@ -1,2 +1,2 @@
 # node-chat
-simple http-pooling chat
+backend for chat-app chat

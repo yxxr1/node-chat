@@ -4,9 +4,10 @@ import { HttpError } from '@utils/errors';
 import { validateName } from '@utils/validation';
 import { manager } from '@core';
 import { User, UserSettings } from '@interfaces/api-types';
+import { CONNECTION_METHODS } from '@const/settings';
 
 const DEFAULT_USER_SETTINGS: UserSettings = {
-  connectionMethod: 'http',
+  connectionMethod: CONNECTION_METHODS.HTTP,
 };
 
 type PostInput = {
@@ -26,10 +27,8 @@ export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
     }
 
     manager.closeUserWatchers(req.session.userId);
-    manager.chats.forEach(chat => {
-      if (chat.isJoined(req.session.userId as string)) {
-        chat.quit(req.session.userId as string, req.session.name as string);
-      }
+    manager.getUserJoinedChats(req.session.userId as string).forEach(chat => {
+      chat.quit(req.session.userId as string, req.session.name as string);
     });
 
     req.session.destroy(() => {

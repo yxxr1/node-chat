@@ -7,7 +7,7 @@ const SUBSCRIBE_TIMEOUT = 10000;
 
 type PostInput = {
   chatId: Chat['id'];
-  lastMessageId?: Message['id'] | null;
+  lastMessageId?: Message['id'];
 };
 type PostOutput = {
   messages: Message[];
@@ -19,33 +19,39 @@ export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
   const chat = manager.getChat(chatId);
 
   if (chat) {
-    let unreceivedMessages: Message[] = [];
+    let unreceivedMessages: Message[] | null = [];
 
     if (lastMessageId) {
-      const lastMessageIndex = chat.messages.findIndex(({ id }) => id === lastMessageId);
-      unreceivedMessages = lastMessageIndex === -1 ? [] : chat.messages.slice(lastMessageIndex + 1);
+      unreceivedMessages = chat.getUnreceivedMessages(req.session.userId as string, lastMessageId);
     }
 
-    if (unreceivedMessages.length) {
+    if (unreceivedMessages === null) {
+      throw new HttpError(403, 'Not joined to this chat');
+    } else if (unreceivedMessages.length) {
       res.json({ messages: unreceivedMessages });
     } else {
-      let watcherId: string;
+      let timerId: NodeJS.Timeout;
+      let watcherId: string | null;
 
-      const timerId = setTimeout(() => {
-        res.json({ messages: [] });
-        chat.unsubscribe(watcherId);
-      }, SUBSCRIBE_TIMEOUT);
-
-      res.on('close', () => {
-        clearTimeout(timerId);
-
-        chat.unsubscribe(watcherId);
-      });
-
-      watcherId = chat.subscribe(req.session.userId as string, (data: PostOutput) => {
+      watcherId = chat.subscribe(req.session.userId as string, (data) => {
         clearTimeout(timerId);
         res.json(data);
+        chat.unsubscribe(watcherId as string);
       });
+
+      if (watcherId !== null) {
+        timerId = setTimeout(() => {
+          res.json({ messages: [] });
+          chat.unsubscribe(watcherId as string);
+        }, SUBSCRIBE_TIMEOUT);
+
+        res.on('close', () => {
+          clearTimeout(timerId);
+          chat.unsubscribe(watcherId as string);
+        });
+      } else {
+        throw new HttpError(403, 'Not joined to this chat');
+      }
     }
   } else {
     throw new HttpError(404, 'Chat not found');

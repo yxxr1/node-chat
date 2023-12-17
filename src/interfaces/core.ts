@@ -1,4 +1,4 @@
-export type WatcherCallback = (data: any) => void;
+export type WatcherCallback<Data> = (data: Data, isUnsubscribed: boolean) => void;
 export type WatcherId = string;
 export type UserId = string;
 
@@ -11,12 +11,12 @@ export type WatchersDictionary = {
   [watcherId: WatcherId]: ConnectionRecord;
 }
 
-export interface Subscribable<Data = any> {
+export interface Subscribable<SubscribeData = any> {
   _watchers: WatchersDictionary;
 
-  _closeWatcher(watcherId: WatcherId, data?: Data): void;
-  _broadcast(data: Data): void;
+  _callWatcher(watcherId: WatcherId, data?: Partial<SubscribeData> | null): void;
+  _broadcast(data: Partial<SubscribeData>): void;
   closeUserWatchers(userId: UserId): void;
-  subscribe(userId: UserId, callback: WatcherCallback): WatcherId;
+  subscribe(userId: UserId, callback: WatcherCallback<SubscribeData>): WatcherId | null;
   unsubscribe(watcherId: WatcherId): void;
 }

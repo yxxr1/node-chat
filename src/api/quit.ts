@@ -18,6 +18,10 @@ export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
     if (chat) {
         const count = chat.quit(req.session.userId as string, req.session.name as string);
 
+        if (count === null) {
+            throw new HttpError(403, 'Not joined to this chat');
+        }
+
         if (!count) {
             manager.deleteChat(chatId);
         }

@@ -1,4 +1,5 @@
 import { RequestHandler } from 'express'
+import { WebsocketRequestHandler } from 'express-ws';
 import { HttpError } from '@utils/errors';
 
 export const checkSessionMiddleware: RequestHandler = (req, res, next) => {
@@ -9,3 +10,10 @@ export const checkSessionMiddleware: RequestHandler = (req, res, next) => {
     next();
 };
 
+export const wsCheckSessionMiddleware: WebsocketRequestHandler = (ws, req, next) => {
+    if (!req.session.userId) {
+        return ws.terminate();
+    }
+
+    next();
+};
