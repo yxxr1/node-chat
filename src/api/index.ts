@@ -8,7 +8,6 @@ import { post as subscribePost } from '@api/subscribe';
 import { post as publishPost } from '@api/publish';
 import { post as authPost } from '@api/auth';
 
-
 export const initApi = (app: Express) => {
   app.post('/auth', authPost);
   app.post('/user', checkSessionMiddleware, userPost);
@@ -19,4 +18,4 @@ export const initApi = (app: Express) => {
   app.post('/quit', checkSessionMiddleware, quitPost);
   app.post('/subscribe', checkSessionMiddleware, subscribePost);
   app.post('/publish', checkSessionMiddleware, publishPost);
-}
+};

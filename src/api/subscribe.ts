@@ -1,5 +1,5 @@
-import { RequestHandler } from 'express'
-import { manager } from '@core'
+import { RequestHandler } from 'express';
+import { manager } from '@core';
 import { HttpError } from '@utils/errors';
 import { Chat, Message } from '@interfaces/api-types';
 
@@ -13,7 +13,7 @@ type PostOutput = {
   messages: Message[];
 };
 
-export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
+export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
   const { chatId, lastMessageId } = req.body;
 
   const chat = manager.getChat(chatId);
@@ -31,9 +31,8 @@ export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
       res.json({ messages: unreceivedMessages });
     } else {
       let timerId: NodeJS.Timeout;
-      let watcherId: string | null;
 
-      watcherId = chat.subscribe(req.session.userId as string, (data) => {
+      const watcherId = chat.subscribe(req.session.userId as string, (data) => {
         clearTimeout(timerId);
         res.json(data);
         chat.unsubscribe(watcherId as string);
@@ -56,5 +55,4 @@ export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
   } else {
     throw new HttpError(404, 'Chat not found');
   }
-
-}
+};

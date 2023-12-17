@@ -4,21 +4,21 @@ import { HttpError } from '@utils/errors';
 import { Message, Chat } from '@interfaces/api-types';
 
 type PostInput = {
-    chatId: Chat['id'];
+  chatId: Chat['id'];
 };
 type PostOutput = {
-    messages: Message[];
+  messages: Message[];
 };
 
-export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
-    const { chatId } = req.body;
+export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
+  const { chatId } = req.body;
 
-    const chat = manager.getChat(chatId);
+  const chat = manager.getChat(chatId);
 
-    if (chat) {
-        const messages = chat.join(req.session.userId as string, req.session.name as string);
-        res.json({ messages });
-    } else {
-        throw new HttpError(404, 'Chat not found');
-    }
-}
+  if (chat) {
+    const messages = chat.join(req.session.userId as string, req.session.name as string);
+    res.json({ messages });
+  } else {
+    throw new HttpError(404, 'Chat not found');
+  }
+};

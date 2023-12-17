@@ -5,7 +5,7 @@ export type UserSettings = {
 export type User = {
   id: string;
   name: string;
-  settings: UserSettings
+  settings: UserSettings;
 };
 
 export type Message = {

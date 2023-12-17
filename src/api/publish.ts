@@ -1,5 +1,5 @@
-import { RequestHandler } from 'express'
-import { manager } from '@core'
+import { RequestHandler } from 'express';
+import { manager } from '@core';
 import { HttpError } from '@utils/errors';
 import { Chat, Message } from '@interfaces/api-types';
 import { MAX_MESSAGE_LENGTH } from '@const/limits';
@@ -10,7 +10,7 @@ type PostInput = {
 };
 type PostOutput = Message;
 
-export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
+export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
   const { chatId } = req.body;
   const messageText = req.body.message.trim();
 
@@ -32,4 +32,4 @@ export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
   } else {
     throw new HttpError(404, 'Chat not found');
   }
-}
+};

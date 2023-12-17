@@ -20,16 +20,11 @@ const wsHandler: WebsocketRequestHandler = (ws, req) => {
         return publish(message.payload, req.session as SessionData, ws);
       case 'SUBSCRIBE_CHAT':
         if (!subscribedChats.includes(message.payload.chatId)) {
-          const isSubscribed = subscribe(
-            message.payload,
-            req.session as SessionData,
-            ws,
-            {
-              onWatcherClosed: () => {
-                subscribedChats = subscribedChats.filter((chatId) => chatId !== message.payload.chatId);
-              },
-            }
-          );
+          const isSubscribed = subscribe(message.payload, req.session as SessionData, ws, {
+            onWatcherClosed: () => {
+              subscribedChats = subscribedChats.filter((chatId) => chatId !== message.payload.chatId);
+            },
+          });
 
           if (isSubscribed) {
             subscribedChats.push(message.payload.chatId);
@@ -44,7 +39,7 @@ const wsHandler: WebsocketRequestHandler = (ws, req) => {
     const message: WSMessage = {
       type: 'WATCH_CHATS',
       payload: data,
-    }
+    };
 
     ws.send(JSON.stringify(message));
   });
@@ -56,8 +51,8 @@ const wsHandler: WebsocketRequestHandler = (ws, req) => {
   ws.on('close', () => {
     manager.unsubscribe(managerWatcherId);
   });
-}
+};
 
 export const initWs = (app: Application) => {
   app.ws('/ws', wsCheckSessionMiddleware, wsHandler);
-}
+};

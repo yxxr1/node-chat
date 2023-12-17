@@ -11,7 +11,7 @@ type PostInput = {
 };
 type PostOutput = ChatType;
 
-export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
+export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
   const { name } = req.body;
 
   if (!validateName(name)) {
@@ -26,7 +26,7 @@ export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
   manager.addChat(chat);
 
   res.json({ id: chat.id, name: chat.name, messages: [] });
-}
+};
 
 type GetOutput = {
   chats: ChatType[];
@@ -34,12 +34,10 @@ type GetOutput = {
   deletedChatsIds?: ChatType['id'][];
 };
 
-export const get: RequestHandler<{}, GetOutput, {}, { watch?: boolean }> = (req, res) => {
+export const get: RequestHandler<Record<string, never>, GetOutput, void, { watch?: boolean }> = (req, res) => {
   const { watch } = req.query;
 
   if (watch) {
-    let watcherId: string;
-
     const timerId = setTimeout(() => {
       res.json({ chats: [], deletedChatsIds: [] });
       manager.unsubscribe(watcherId);
@@ -50,7 +48,7 @@ export const get: RequestHandler<{}, GetOutput, {}, { watch?: boolean }> = (req,
       manager.unsubscribe(watcherId);
     });
 
-    watcherId = manager.subscribe(req.session.userId as string, (data) => {
+    const watcherId = manager.subscribe(req.session.userId as string, (data) => {
       clearTimeout(timerId);
       res.json(data);
       manager.unsubscribe(watcherId);
@@ -60,4 +58,4 @@ export const get: RequestHandler<{}, GetOutput, {}, { watch?: boolean }> = (req,
     const joinedChatsIds = manager.getUserJoinedChats(req.session.userId as string).map(({ id }) => id);
     res.json({ chats, joinedChatsIds });
   }
-}
+};

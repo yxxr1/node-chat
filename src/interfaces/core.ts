@@ -6,12 +6,12 @@ export type ConnectionRecord = {
   id: WatcherId;
   callback: WatcherCallback;
   userId: UserId;
-}
+};
 export type WatchersDictionary = {
   [watcherId: WatcherId]: ConnectionRecord;
-}
+};
 
-export interface Subscribable<SubscribeData = any> {
+export interface Subscribable<SubscribeData> {
   _watchers: WatchersDictionary;
 
   _callWatcher(watcherId: WatcherId, data?: Partial<SubscribeData> | null): void;

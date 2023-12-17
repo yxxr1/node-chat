@@ -13,12 +13,14 @@ const DEFAULT_USER_SETTINGS: UserSettings = {
 type PostInput = {
   name: User['name'] | null;
 };
-type PostOutput = User | {
-  id: null;
-  name: null;
-};
+type PostOutput =
+  | User
+  | {
+      id: null;
+      name: null;
+    };
 
-export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
+export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
   const { name } = req.body;
 
   if (name === null) {
@@ -27,7 +29,7 @@ export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
     }
 
     manager.closeUserWatchers(req.session.userId);
-    manager.getUserJoinedChats(req.session.userId as string).forEach(chat => {
+    manager.getUserJoinedChats(req.session.userId as string).forEach((chat) => {
       chat.quit(req.session.userId as string, req.session.name as string);
     });
 
@@ -51,4 +53,4 @@ export const post: RequestHandler<{}, PostOutput, PostInput> = (req, res) => {
 
     res.json({ id, name, settings: DEFAULT_USER_SETTINGS });
   }
-}
+};

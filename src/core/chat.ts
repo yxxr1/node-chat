@@ -1,19 +1,19 @@
 import { nanoid } from 'nanoid';
 import { Subscribable, WatchersDictionary, UserId, WatcherId, WatcherCallback } from '@interfaces/core';
 import { Message as MessageType } from '@interfaces/api-types';
-import { Message, SERVICE_TYPES } from './message'
+import { Message, SERVICE_TYPES } from './message';
 
 export type ChatSubscribeData = {
   messages: MessageType[];
 };
 
 export class Chat implements Subscribable<ChatSubscribeData> {
-  id: string
-  creatorId?: UserId
-  name: string
-  _watchers: WatchersDictionary = {}
-  joinedUsers: UserId[] = []
-  _messages: Message[] = []
+  id: string;
+  creatorId?: UserId;
+  name: string;
+  _watchers: WatchersDictionary = {};
+  joinedUsers: UserId[] = [];
+  _messages: Message[] = [];
 
   constructor(name: string, creatorId?: UserId) {
     this.id = nanoid();
@@ -65,7 +65,7 @@ export class Chat implements Subscribable<ChatSubscribeData> {
     if (this.isJoined(userId)) {
       this.closeUserWatchers(userId);
 
-      this.joinedUsers = this.joinedUsers.filter(joinedUserId => joinedUserId !== userId);
+      this.joinedUsers = this.joinedUsers.filter((joinedUserId) => joinedUserId !== userId);
 
       const message = new Message(null, userId, userName, SERVICE_TYPES.CHAT_LEFT);
       this._messages.push(message);
@@ -106,18 +106,17 @@ export class Chat implements Subscribable<ChatSubscribeData> {
   }
 
   _broadcast(data: Partial<ChatSubscribeData>): void {
-    Object.keys(this._watchers).forEach(watcherId => {
+    Object.keys(this._watchers).forEach((watcherId) => {
       this._callWatcher(watcherId, data);
-    })
+    });
   }
 
   _closeChat(): void {
-    Object.keys(this._watchers).forEach(watcherId => {
+    Object.keys(this._watchers).forEach((watcherId) => {
       this._callWatcher(watcherId, null);
     });
     this._watchers = {};
     this._messages = [];
     this.joinedUsers = [];
-
   }
 }

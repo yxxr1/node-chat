@@ -11,15 +11,15 @@ export type ManagerSubscribeData = {
 const MAIN_CHAT_NAME = 'main';
 
 class Manager implements Subscribable<ManagerSubscribeData> {
-  chats: Chat[] = []
-  _watchers: WatchersDictionary = {}
+  chats: Chat[] = [];
+  _watchers: WatchersDictionary = {};
 
   constructor() {
     this.chats.push(new Chat(MAIN_CHAT_NAME));
   }
 
   getChat(chatId: Chat['id']): Chat | undefined {
-    return this.chats.find(({ id }) => id === chatId)
+    return this.chats.find(({ id }) => id === chatId);
   }
 
   addChat(chat: Chat): void {
@@ -41,7 +41,7 @@ class Manager implements Subscribable<ManagerSubscribeData> {
   }
 
   getUserJoinedChats(userId: UserId) {
-    return this.chats.filter(chat => chat.isJoined(userId));
+    return this.chats.filter((chat) => chat.isJoined(userId));
   }
 
   subscribe(userId: UserId, callback: WatcherCallback<ManagerSubscribeData>): WatcherId {
@@ -67,17 +67,14 @@ class Manager implements Subscribable<ManagerSubscribeData> {
 
   _callWatcher(watcherId: WatcherId, data?: Partial<ManagerSubscribeData> | null): void {
     if (this._watchers[watcherId]) {
-      this._watchers[watcherId].callback(
-        { chats: data?.chats ?? [], deletedChatsIds: data?.deletedChatsIds ?? [] },
-        data === null,
-      );
+      this._watchers[watcherId].callback({ chats: data?.chats ?? [], deletedChatsIds: data?.deletedChatsIds ?? [] }, data === null);
     }
   }
 
   _broadcast(data: Partial<ManagerSubscribeData>): void {
-    Object.keys(this._watchers).forEach(watcherId => {
+    Object.keys(this._watchers).forEach((watcherId) => {
       this._callWatcher(watcherId, data);
-    })
+    });
   }
 }
 
