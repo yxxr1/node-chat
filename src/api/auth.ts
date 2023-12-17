@@ -30,7 +30,11 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
 
     manager.closeUserWatchers(req.session.userId);
     manager.getUserJoinedChats(req.session.userId as string).forEach((chat) => {
-      chat.quit(req.session.userId as string, req.session.name as string);
+      const count = chat.quit(req.session.userId as string, req.session.name as string);
+
+      if (count === 0) {
+        manager.deleteChat(chat.id);
+      }
     });
 
     req.session.destroy(() => {
