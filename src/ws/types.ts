@@ -1,7 +1,6 @@
 import * as WebSocket from 'ws';
 import { SessionData } from 'express-session';
-import { PublishPayload } from '@ws/publish';
-import { SubscribePayload } from '@ws/subscribe';
+import { PublishPayload, SubscribePayload } from '@ws/methods';
 import { ChatSubscribeData, ManagerSubscribeData } from '@core';
 import { Chat } from '@interfaces/api-types';
 

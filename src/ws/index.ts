@@ -1,13 +1,10 @@
 import { Application, WebsocketRequestHandler } from 'express-ws';
 import { SessionData } from 'express-session';
-import { publish } from '@ws/publish';
-import { subscribe } from '@ws/subscribe';
 import { wsCheckSessionMiddleware } from '@middleware';
 import { manager } from '@core';
-import { WSMessage } from '@ws/types';
-import { PublishPayload } from '@ws/publish';
-import { SubscribePayload } from '@ws/subscribe';
 import { isId, isValidMessage } from '@utils/validation';
+import { publish, subscribe, PublishPayload, SubscribePayload } from '@ws/methods';
+import { WSMessage } from '@ws/types';
 import { WSConnectionManager } from '@ws/manager';
 import { getMessageHandler } from '@ws/utils';
 
