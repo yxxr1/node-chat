@@ -1,6 +1,7 @@
 import { RequestHandler } from 'express';
 import { manager } from '@core';
 import { HttpError } from '@utils/errors';
+import { validateParams } from '@utils/validation';
 import { Message, Chat } from '@interfaces/api-types';
 
 type PostInput = {
@@ -11,7 +12,7 @@ type PostOutput = {
 };
 
 export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
-  const { chatId } = req.body;
+  const { chatId } = validateParams<PostInput>(req);
 
   const chat = manager.getChat(chatId);
 

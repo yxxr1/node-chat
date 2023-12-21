@@ -3,6 +3,7 @@ import { manager } from '@core';
 import { Chat, Message } from '@interfaces/api-types';
 import { WatcherId } from '@interfaces/core';
 import { WSMessage } from '@ws/types';
+import { WSConnectionManager } from '@ws/manager';
 
 export type SubscribePayload = {
   chatId: Chat['id'];
@@ -10,61 +11,61 @@ export type SubscribePayload = {
 };
 
 type Context = {
-  onWatcherClosed: () => void;
+  connectionManager: WSConnectionManager;
 };
 
-export const subscribe: WSMessageHandler<SubscribePayload, Context, boolean> = (
+export const subscribe: WSMessageHandler<SubscribePayload, Context> = (
   { chatId, lastMessageId },
   { userId },
   ws,
-  { onWatcherClosed },
+  { connectionManager },
 ) => {
-  const chat = manager.getChat(chatId);
+  if (!connectionManager.isSubscribed(chatId)) {
+    const chat = manager.getChat(chatId);
 
-  if (chat) {
-    const unreceivedMessages = chat.getUnreceivedMessages(userId, lastMessageId);
+    if (chat) {
+      const unreceivedMessages = chat.getUnreceivedMessages(userId, lastMessageId);
 
-    if (unreceivedMessages !== null && unreceivedMessages.length) {
-      const message: WSMessage = {
-        type: 'SUBSCRIBED_CHAT',
-        payload: {
-          messages: unreceivedMessages,
-          chatId: chat.id,
-        },
-      };
-
-      ws.send(JSON.stringify(message));
-    }
-
-    const unsubscribeWatcher = () => {
-      chat.unsubscribe(watcherId as WatcherId);
-    };
-
-    const watcherId = chat.subscribe(userId, (data, isUnsubscribed) => {
-      if (isUnsubscribed) {
-        ws.removeEventListener('error', unsubscribeWatcher);
-        ws.removeEventListener('close', unsubscribeWatcher);
-        onWatcherClosed();
-      } else {
+      if (unreceivedMessages !== null && unreceivedMessages.length) {
         const message: WSMessage = {
           type: 'SUBSCRIBED_CHAT',
           payload: {
-            ...data,
+            messages: unreceivedMessages,
             chatId: chat.id,
           },
         };
 
         ws.send(JSON.stringify(message));
       }
-    });
 
-    if (watcherId !== null) {
-      ws.on('error', unsubscribeWatcher);
-      ws.on('close', unsubscribeWatcher);
+      const unsubscribeWatcher = () => {
+        chat.unsubscribe(watcherId as WatcherId);
+      };
 
-      return true;
+      const watcherId = chat.subscribe(userId, (data, isUnsubscribed) => {
+        if (isUnsubscribed) {
+          ws.removeEventListener('error', unsubscribeWatcher);
+          ws.removeEventListener('close', unsubscribeWatcher);
+          connectionManager.deleteSubscribed(chat.id);
+        } else {
+          const message: WSMessage = {
+            type: 'SUBSCRIBED_CHAT',
+            payload: {
+              ...data,
+              chatId: chat.id,
+            },
+          };
+
+          ws.send(JSON.stringify(message));
+        }
+      });
+
+      if (watcherId !== null) {
+        ws.on('error', unsubscribeWatcher);
+        ws.on('close', unsubscribeWatcher);
+
+        connectionManager.addSubscribed(chat.id);
+      }
     }
   }
-
-  return false;
 };

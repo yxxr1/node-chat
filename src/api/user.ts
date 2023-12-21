@@ -1,30 +1,25 @@
 import { RequestHandler } from 'express';
 import { User, UserSettings } from '@interfaces/api-types';
-import { validateName } from '@utils/validation';
-import { CONNECTION_METHODS } from '@const/settings';
+import { validateParams } from '@utils/validation';
 
 type PostInput = {
-  name?: User['name'] | null;
+  name: User['name'];
   settings?: UserSettings;
 };
 type PostOutput = User;
 
 export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
-  const { name, settings } = req.body;
+  const { name, settings } = validateParams<PostInput>(req);
 
-  if (validateName(name)) {
-    req.session.name = name;
-  }
+  req.session.name = name;
 
-  if (settings) {
+  if (settings?.connectionMethod) {
     const { connectionMethod } = settings;
 
-    if (connectionMethod === CONNECTION_METHODS.HTTP || connectionMethod === CONNECTION_METHODS.WS) {
-      req.session.settings = {
-        ...req.session.settings,
-        connectionMethod,
-      };
-    }
+    req.session.settings = {
+      ...req.session.settings,
+      connectionMethod,
+    };
   }
 
   res.json({

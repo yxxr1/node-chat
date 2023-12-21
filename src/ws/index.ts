@@ -4,36 +4,40 @@ import { publish } from '@ws/publish';
 import { subscribe } from '@ws/subscribe';
 import { wsCheckSessionMiddleware } from '@middleware';
 import { manager } from '@core';
-import { Chat } from '@interfaces/api-types';
 import { WSMessage } from '@ws/types';
+import { PublishPayload } from '@ws/publish';
+import { SubscribePayload } from '@ws/subscribe';
+import { isId, isValidMessage } from '@utils/validation';
+import { WSConnectionManager } from '@ws/manager';
+import { getMessageHandler } from '@ws/utils';
 
 const wsHandler: WebsocketRequestHandler = (ws, req) => {
   const { userId } = req.session;
 
-  let subscribedChats: Chat['id'][] = [];
+  const connectionManager = new WSConnectionManager();
 
-  ws.on('message', (data: string) => {
-    const message: WSMessage = JSON.parse(data);
-
-    switch (message.type) {
-      case 'PUBLISH_MESSAGE':
-        return publish(message.payload, req.session as SessionData, ws);
-      case 'SUBSCRIBE_CHAT':
-        if (!subscribedChats.includes(message.payload.chatId)) {
-          const isSubscribed = subscribe(message.payload, req.session as SessionData, ws, {
-            onWatcherClosed: () => {
-              subscribedChats = subscribedChats.filter((chatId) => chatId !== message.payload.chatId);
+  ws.on(
+    'message',
+    getMessageHandler({
+      PUBLISH_MESSAGE: (payload: PublishPayload) => {
+        if (isId(payload.chatId) && isValidMessage(payload.message)) {
+          publish(
+            {
+              ...payload,
+              message: payload.message.trim(),
             },
-          });
-
-          if (isSubscribed) {
-            subscribedChats.push(message.payload.chatId);
-          }
+            req.session as SessionData,
+            ws,
+          );
         }
-
-        return;
-    }
-  });
+      },
+      SUBSCRIBE_CHAT: (payload: SubscribePayload) => {
+        if (isId(payload.chatId) && isId(payload.lastMessageId)) {
+          subscribe(payload, req.session as SessionData, ws, { connectionManager });
+        }
+      },
+    }),
+  );
 
   const managerWatcherId = manager.subscribe(userId as string, (data) => {
     const message: WSMessage = {

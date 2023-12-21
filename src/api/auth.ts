@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 import { nanoid } from 'nanoid';
 import { HttpError } from '@utils/errors';
-import { validateName } from '@utils/validation';
+import { validateParams } from '@utils/validation';
 import { manager } from '@core';
 import { User, UserSettings } from '@interfaces/api-types';
 import { CONNECTION_METHODS } from '@const/settings';
@@ -21,7 +21,7 @@ type PostOutput =
     };
 
 export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
-  const { name } = req.body;
+  const { name } = validateParams<PostInput>(req);
 
   if (name === null) {
     if (!req.session.userId) {
@@ -43,10 +43,6 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
   } else {
     if (req.session.userId) {
       throw new HttpError(403, 'Already authorized');
-    }
-
-    if (!validateName(name)) {
-      throw new HttpError(403, 'Invalid name');
     }
 
     const id = nanoid();

@@ -1,6 +1,7 @@
 import { RequestHandler } from 'express';
 import { manager } from '@core';
 import { HttpError } from '@utils/errors';
+import { validateParams } from '@utils/validation';
 import { Chat, Message } from '@interfaces/api-types';
 
 const SUBSCRIBE_TIMEOUT = 10000;
@@ -14,7 +15,7 @@ type PostOutput = {
 };
 
 export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
-  const { chatId, lastMessageId } = req.body;
+  const { chatId, lastMessageId } = validateParams<PostInput>(req);
 
   const chat = manager.getChat(chatId);
 

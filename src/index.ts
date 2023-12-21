@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import expressWs from 'express-ws';
 import { COMMON_CONFIG } from '@config/common';
-import { corsMiddleware, errorMiddleware } from '@middleware';
+import { corsMiddleware, errorMiddleware, checkQuery } from '@middleware';
 import { initApi } from '@api';
 import { initWs } from '@ws';
 import '@interfaces/session';
@@ -12,7 +12,9 @@ import '@interfaces/session';
 const app = express();
 const { app: wsApp } = expressWs(app);
 
-app.use(bodyParser.json());
+app.use(checkQuery);
+
+app.use(bodyParser.json({ limit: '10kb' }));
 app.use(cookieParser());
 app.use(session({ secret: COMMON_CONFIG.SESSION_SECRET }));
 
