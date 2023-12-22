@@ -7,3 +7,19 @@ export class HttpError extends Error {
     this.status = status;
   }
 }
+
+export class ChatNotFound extends HttpError {
+  name = 'ChatNotFound';
+
+  constructor() {
+    super(404, 'Chat not found');
+  }
+}
+
+export class NotJoinedChat extends HttpError {
+  name = 'NotJoinedChat';
+
+  constructor() {
+    super(403, 'Not joined to this chat');
+  }
+}

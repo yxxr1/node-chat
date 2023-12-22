@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 import { manager } from '@core';
-import { HttpError } from '@utils/errors';
+import { ChatNotFound } from '@utils/errors';
 import { validateParams } from '@utils/validation';
 import { Message, Chat } from '@interfaces/api-types';
 
@@ -20,6 +20,6 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
     const messages = chat.join(req.session.userId as string, req.session.name as string);
     res.json({ messages });
   } else {
-    throw new HttpError(404, 'Chat not found');
+    throw new ChatNotFound();
   }
 };

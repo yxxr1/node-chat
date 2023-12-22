@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 import { manager } from '@core';
-import { HttpError } from '@utils/errors';
+import { ChatNotFound, NotJoinedChat } from '@utils/errors';
 import { validateParams } from '@utils/validation';
 import { Chat } from '@interfaces/api-types';
 
@@ -20,7 +20,7 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
     const count = chat.quit(req.session.userId as string, req.session.name as string);
 
     if (count === null) {
-      throw new HttpError(403, 'Not joined to this chat');
+      throw new NotJoinedChat();
     }
 
     if (!count) {
@@ -29,6 +29,6 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
 
     res.json({ chatId });
   } else {
-    throw new HttpError(404, 'Chat not found');
+    throw new ChatNotFound();
   }
 };

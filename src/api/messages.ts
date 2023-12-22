@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 import { manager } from '@core';
-import { HttpError } from '@utils/errors';
+import { ChatNotFound, NotJoinedChat } from '@utils/errors';
 import { validateParams } from '@utils/validation';
 import { Chat, Message } from '@interfaces/api-types';
 
@@ -32,11 +32,11 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
     const messages = chat.getMessages(req.session.userId as string, lastMessageId, DIRECTION_MAP[direction]);
 
     if (messages === null) {
-      throw new HttpError(403, 'Not joined to this chat');
+      throw new NotJoinedChat();
     }
 
     res.json({ messages });
   } else {
-    throw new HttpError(404, 'Chat not found');
+    throw new ChatNotFound();
   }
 };

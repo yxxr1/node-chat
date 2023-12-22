@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 import { manager } from '@core';
-import { HttpError } from '@utils/errors';
+import { ChatNotFound, NotJoinedChat } from '@utils/errors';
 import { validateParams } from '@utils/validation';
 import { Chat, Message } from '@interfaces/api-types';
 
@@ -27,7 +27,7 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
     }
 
     if (unreceivedMessages === null) {
-      throw new HttpError(403, 'Not joined to this chat');
+      throw new NotJoinedChat();
     } else if (unreceivedMessages.length) {
       res.json({ messages: unreceivedMessages });
     } else {
@@ -50,10 +50,10 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
           chat.unsubscribe(watcherId as string);
         });
       } else {
-        throw new HttpError(403, 'Not joined to this chat');
+        throw new NotJoinedChat();
       }
     }
   } else {
-    throw new HttpError(404, 'Chat not found');
+    throw new ChatNotFound();
   }
 };
