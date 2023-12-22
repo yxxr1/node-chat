@@ -16,7 +16,7 @@ app.use(checkQuery);
 
 app.use(bodyParser.json({ limit: '10kb' }));
 app.use(cookieParser());
-app.use(session({ secret: COMMON_CONFIG.SESSION_SECRET }));
+app.use(session({ secret: COMMON_CONFIG.SESSION_SECRET, saveUninitialized: false, resave: false }));
 
 app.use(corsMiddleware);
 
@@ -24,4 +24,6 @@ initApi(app);
 initWs(wsApp);
 app.use(errorMiddleware);
 
-app.listen(COMMON_CONFIG.PORT);
+app.listen(COMMON_CONFIG.PORT, () => {
+  console.log('Server started');
+});
