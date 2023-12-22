@@ -10,6 +10,7 @@ import { post as quitPost } from '@api/quit';
 import { post as subscribePost } from '@api/subscribe';
 import { post as publishPost } from '@api/publish';
 import { post as authPost } from '@api/auth';
+import { post as messagesPost, DIRECTIONS } from '@api/messages';
 import { MAX_MESSAGE_LENGTH } from '@const/limits';
 
 export const initApi = (app: Express) => {
@@ -41,5 +42,16 @@ export const initApi = (app: Express) => {
       .isLength({ min: 1, max: MAX_MESSAGE_LENGTH })
       .withMessage(`Message must be length from 1 to ${MAX_MESSAGE_LENGTH}`),
     publishPost,
+  );
+  app.post(
+    '/messages',
+    checkSessionMiddleware,
+    getIdChain('chatId'),
+    getIdChain('lastMessageId').optional(),
+    body('direction')
+      .default(DIRECTIONS.NEXT)
+      .matches(`^(${DIRECTIONS.PREV}|${DIRECTIONS.NEXT})$`)
+      .withMessage(`Direction must be '${DIRECTIONS.PREV}' or '${DIRECTIONS.NEXT}'`),
+    messagesPost,
   );
 };

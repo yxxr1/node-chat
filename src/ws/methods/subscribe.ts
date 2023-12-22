@@ -24,7 +24,7 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = (
     const chat = manager.getChat(chatId);
 
     if (chat) {
-      const unreceivedMessages = chat.getUnreceivedMessages(userId, lastMessageId);
+      const unreceivedMessages = chat.getMessages(userId, lastMessageId);
 
       if (unreceivedMessages !== null && unreceivedMessages.length) {
         const message: WSMessage = {

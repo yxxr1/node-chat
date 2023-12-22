@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+import moment from 'moment';
 
 export const SERVICE_TYPES = {
   CHAT_JOINED: 1,
@@ -10,7 +11,7 @@ export class Message {
   text: string | null;
   fromId: string;
   fromName: string | null;
-  date: Date | string;
+  date: number;
   service?: number;
 
   constructor(text: string | null, fromId: string, fromName: string | null, service?: number) {
@@ -19,6 +20,6 @@ export class Message {
     this.fromId = fromId;
     this.fromName = fromName;
     this.service = service;
-    this.date = new Date();
+    this.date = moment().valueOf();
   }
 }

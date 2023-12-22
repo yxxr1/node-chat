@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid';
 import { Subscribable, WatchersDictionary, UserId, WatcherId, WatcherCallback } from '@interfaces/core';
 import { Message as MessageType } from '@interfaces/api-types';
+import { MESSAGES_PAGE_SIZE } from '@const/limits';
 import { Message, SERVICE_TYPES } from './message';
 
 export type ChatSubscribeData = {
@@ -30,7 +31,7 @@ export class Chat implements Subscribable<ChatSubscribeData> {
       this._broadcast({ messages: [message] });
     }
 
-    return this._messages;
+    return this._getMessages();
   }
 
   subscribe(userId: UserId, callback: WatcherCallback<ChatSubscribeData>): WatcherId | null {
@@ -90,10 +91,28 @@ export class Chat implements Subscribable<ChatSubscribeData> {
     });
   }
 
-  getUnreceivedMessages(userId: UserId, lastMessageId: string): MessageType[] | null {
-    if (this.isJoined(userId)) {
+  _getMessages(lastMessageId?: Message['id'], direction: 1 | -1 = 1, pageSize = MESSAGES_PAGE_SIZE): Message[] {
+    if (lastMessageId) {
       const lastMessageIndex = this._messages.findIndex(({ id }) => id === lastMessageId);
-      return lastMessageIndex === -1 ? [] : this._messages.slice(lastMessageIndex + 1);
+
+      if (lastMessageIndex === -1) {
+        return [];
+      }
+
+      if (Math.sign(direction) === 1) {
+        return this._messages.slice(lastMessageIndex + 1, lastMessageIndex + pageSize + 1);
+      } else {
+        const startIndex = lastMessageIndex - pageSize;
+        return this._messages.slice(startIndex < 0 ? 0 : startIndex, lastMessageIndex);
+      }
+    }
+
+    return this._messages.slice(-pageSize);
+  }
+
+  getMessages(userId: UserId, ...args: Parameters<Chat['_getMessages']>): MessageType[] | null {
+    if (this.isJoined(userId)) {
+      return this._getMessages(...args);
     }
 
     return null;

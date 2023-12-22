@@ -13,7 +13,7 @@ export type Message = {
   text: string | null;
   fromId: string;
   fromName: string | null;
-  date: Date | string;
+  date: number;
   service?: number;
 };
 

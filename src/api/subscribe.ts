@@ -23,7 +23,7 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
     let unreceivedMessages: Message[] | null = [];
 
     if (lastMessageId) {
-      unreceivedMessages = chat.getUnreceivedMessages(req.session.userId as string, lastMessageId);
+      unreceivedMessages = chat.getMessages(req.session.userId as string, lastMessageId);
     }
 
     if (unreceivedMessages === null) {
