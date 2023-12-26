@@ -26,9 +26,7 @@ export class Chat implements Subscribable<ChatSubscribeData> {
     if (!this.isJoined(userId)) {
       this.joinedUsers.push(userId);
 
-      const message = new Message(null, userId, userName, SERVICE_TYPES.CHAT_JOINED);
-      this._messages.push(message);
-      this._broadcast({ messages: [message] });
+      this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_JOINED);
     }
 
     return this._getMessages();
@@ -52,11 +50,7 @@ export class Chat implements Subscribable<ChatSubscribeData> {
 
   publish(text: string, fromId: UserId, fromName: string | null): Message | null {
     if (this.isJoined(fromId)) {
-      const message = new Message(text, fromId, fromName);
-      this._messages.push(message);
-      this._broadcast({ messages: [message] });
-
-      return message;
+      return this._addMessage(text, fromId, fromName);
     }
 
     return null;
@@ -68,9 +62,7 @@ export class Chat implements Subscribable<ChatSubscribeData> {
 
       this.joinedUsers = this.joinedUsers.filter((joinedUserId) => joinedUserId !== userId);
 
-      const message = new Message(null, userId, userName, SERVICE_TYPES.CHAT_LEFT);
-      this._messages.push(message);
-      this._broadcast({ messages: [message] });
+      this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_LEFT);
 
       return this.joinedUsers.length;
     }
@@ -91,6 +83,25 @@ export class Chat implements Subscribable<ChatSubscribeData> {
     });
   }
 
+  getMessages(userId: UserId, ...args: Parameters<Chat['_getMessages']>): MessageType[] | null {
+    if (this.isJoined(userId)) {
+      return this._getMessages(...args);
+    }
+
+    return null;
+  }
+
+  _addMessage(...messageParams: ConstructorParameters<typeof Message>): Message {
+    const index = this._messages.length ? this._messages[this._messages.length - 1].index + 1 : 0;
+    const message = new Message(...messageParams);
+    message.setIndex(index);
+    this._messages.push(message);
+
+    this._broadcast({ messages: [message] });
+
+    return message;
+  }
+
   _getMessages(lastMessageId?: Message['id'], direction: 1 | -1 = 1, pageSize = MESSAGES_PAGE_SIZE): Message[] {
     if (lastMessageId) {
       const lastMessageIndex = this._messages.findIndex(({ id }) => id === lastMessageId);
@@ -108,14 +119,6 @@ export class Chat implements Subscribable<ChatSubscribeData> {
     }
 
     return this._messages.slice(-pageSize);
-  }
-
-  getMessages(userId: UserId, ...args: Parameters<Chat['_getMessages']>): MessageType[] | null {
-    if (this.isJoined(userId)) {
-      return this._getMessages(...args);
-    }
-
-    return null;
   }
 
   _callWatcher(watcherId: WatcherId, data?: Partial<ChatSubscribeData> | null): void {

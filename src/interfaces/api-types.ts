@@ -15,6 +15,7 @@ export type Message = {
   fromName: string | null;
   date: number;
   service?: number;
+  index: number;
 };
 
 export type Chat = {
