@@ -7,7 +7,7 @@ import { WSConnectionManager } from '@ws/manager';
 
 export type SubscribePayload = {
   chatId: Chat['id'];
-  lastMessageId: Message['id'];
+  lastMessageId?: Message['id'] | null;
 };
 
 type Context = {
@@ -24,7 +24,11 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = (
     const chat = manager.getChat(chatId);
 
     if (chat) {
-      const unreceivedMessages = chat.getMessages(userId, lastMessageId);
+      let unreceivedMessages: Message[] | null = [];
+
+      if (lastMessageId) {
+        unreceivedMessages = chat.getMessages(userId, lastMessageId);
+      }
 
       if (unreceivedMessages !== null && unreceivedMessages.length) {
         const message: WSMessage = {

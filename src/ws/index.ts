@@ -29,7 +29,10 @@ const wsHandler: WebsocketRequestHandler = (ws, req) => {
         }
       },
       SUBSCRIBE_CHAT: (payload: SubscribePayload) => {
-        if (isId(payload.chatId) && isId(payload.lastMessageId)) {
+        if (
+          isId(payload.chatId) &&
+          (isId(payload.lastMessageId) || payload.lastMessageId === undefined || payload.lastMessageId === null)
+        ) {
           subscribe(payload, req.session as SessionData, ws, { connectionManager });
         }
       },
