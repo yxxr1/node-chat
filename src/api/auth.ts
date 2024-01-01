@@ -7,7 +7,7 @@ import { User, UserSettings } from '@interfaces/api-types';
 import { CONNECTION_METHODS } from '@const/settings';
 
 const DEFAULT_USER_SETTINGS: UserSettings = {
-  connectionMethod: CONNECTION_METHODS.HTTP,
+  connectionMethod: CONNECTION_METHODS.WS,
 };
 
 type PostInput = {
