@@ -1,25 +1,35 @@
 import { nanoid } from 'nanoid';
-import { Subscribable, WatchersDictionary, UserId, WatcherId, WatcherCallback } from '@interfaces/core';
+import { UserId, WatcherId, WatcherCallback } from '@interfaces/core';
 import { Message as MessageType } from '@interfaces/api-types';
 import { MESSAGES_PAGE_SIZE } from '@const/limits';
-import { Message, SERVICE_TYPES } from './message';
+import { Subscribable } from '@core/subscribable';
+import { Message, SERVICE_TYPES } from '@core/message';
 
 export type ChatSubscribeData = {
   messages: MessageType[];
 };
 
-export class Chat implements Subscribable<ChatSubscribeData> {
+export class Chat extends Subscribable<ChatSubscribeData, null> {
   id: string;
   creatorId?: UserId;
   name: string;
-  _watchers: WatchersDictionary = {};
   joinedUsers: UserId[] = [];
   _messages: Message[] = [];
 
   constructor(name: string, creatorId?: UserId) {
+    super();
+
     this.id = nanoid();
     this.creatorId = creatorId;
     this.name = name;
+  }
+
+  subscribe(userId: UserId, callback: WatcherCallback<ChatSubscribeData>): WatcherId | null {
+    if (this.isJoined(userId)) {
+      return super.subscribe(userId, callback);
+    }
+
+    return null;
   }
 
   join(userId: UserId, userName: string | null): Message[] {
@@ -30,22 +40,6 @@ export class Chat implements Subscribable<ChatSubscribeData> {
     }
 
     return this._getMessages();
-  }
-
-  subscribe(userId: UserId, callback: WatcherCallback<ChatSubscribeData>): WatcherId | null {
-    if (this.isJoined(userId)) {
-      const id = nanoid();
-
-      this._watchers[id] = { id, userId, callback };
-
-      return id;
-    }
-
-    return null;
-  }
-
-  unsubscribe(watcherId: WatcherId): void {
-    delete this._watchers[watcherId];
   }
 
   publish(text: string, fromId: UserId, fromName: string | null): Message | null {
@@ -72,15 +66,6 @@ export class Chat implements Subscribable<ChatSubscribeData> {
 
   isJoined(userId: UserId): boolean {
     return this.joinedUsers.includes(userId);
-  }
-
-  closeUserWatchers(userId: UserId): void {
-    Object.values(this._watchers).forEach(({ id, userId: watcherUserId }) => {
-      if (watcherUserId === userId) {
-        this._callWatcher(id, null);
-        this.unsubscribe(id);
-      }
-    });
   }
 
   getMessages(userId: UserId, ...args: Parameters<Chat['_getMessages']>): MessageType[] | null {
@@ -119,18 +104,6 @@ export class Chat implements Subscribable<ChatSubscribeData> {
     }
 
     return this._messages.slice(-pageSize);
-  }
-
-  _callWatcher(watcherId: WatcherId, data?: Partial<ChatSubscribeData> | null): void {
-    if (this._watchers[watcherId]) {
-      this._watchers[watcherId].callback({ messages: data?.messages ?? [] }, data === null);
-    }
-  }
-
-  _broadcast(data: Partial<ChatSubscribeData>): void {
-    Object.keys(this._watchers).forEach((watcherId) => {
-      this._callWatcher(watcherId, data);
-    });
   }
 
   _closeChat(): void {

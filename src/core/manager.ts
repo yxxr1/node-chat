@@ -1,7 +1,7 @@
-import { nanoid } from 'nanoid';
-import { Subscribable, WatchersDictionary, WatcherId, WatcherCallback, UserId } from '@interfaces/core';
+import { UserId } from '@interfaces/core';
 import { Chat as ChatType } from '@interfaces/api-types';
-import { Chat } from './chat';
+import { Subscribable } from '@core/subscribable';
+import { Chat } from '@core/chat';
 
 export type ManagerSubscribeData = {
   chats: ChatType[];
@@ -10,11 +10,12 @@ export type ManagerSubscribeData = {
 
 const MAIN_CHAT_NAME = 'main';
 
-class Manager implements Subscribable<ManagerSubscribeData> {
+class Manager extends Subscribable<ManagerSubscribeData> {
   chats: Chat[] = [];
-  _watchers: WatchersDictionary = {};
 
   constructor() {
+    super();
+
     this.chats.push(new Chat(MAIN_CHAT_NAME));
   }
 
@@ -24,7 +25,7 @@ class Manager implements Subscribable<ManagerSubscribeData> {
 
   addChat(chat: Chat): void {
     this.chats.push(chat);
-    this._broadcast({ chats: [{ id: chat.id, name: chat.name, messages: [] }] });
+    this._broadcast({ chats: [{ id: chat.id, name: chat.name, messages: [] }], deletedChatsIds: [] });
   }
 
   deleteChat(chatId: Chat['id']): void {
@@ -33,7 +34,7 @@ class Manager implements Subscribable<ManagerSubscribeData> {
 
       if (match) {
         chat._closeChat();
-        this._broadcast({ deletedChatsIds: [chatId] });
+        this._broadcast({ deletedChatsIds: [chatId], chats: [] });
       }
 
       return !match;
@@ -42,39 +43,6 @@ class Manager implements Subscribable<ManagerSubscribeData> {
 
   getUserJoinedChats(userId: UserId) {
     return this.chats.filter((chat) => chat.isJoined(userId));
-  }
-
-  subscribe(userId: UserId, callback: WatcherCallback<ManagerSubscribeData>): WatcherId {
-    const id = nanoid();
-
-    this._watchers[id] = { id, userId, callback };
-
-    return id;
-  }
-
-  unsubscribe(watcherId: WatcherId) {
-    delete this._watchers[watcherId];
-  }
-
-  closeUserWatchers(userId: UserId): void {
-    Object.values(this._watchers).forEach(({ id, userId: watcherUserId }) => {
-      if (watcherUserId === userId) {
-        this._callWatcher(id, null);
-        this.unsubscribe(id);
-      }
-    });
-  }
-
-  _callWatcher(watcherId: WatcherId, data?: Partial<ManagerSubscribeData> | null): void {
-    if (this._watchers[watcherId]) {
-      this._watchers[watcherId].callback({ chats: data?.chats ?? [], deletedChatsIds: data?.deletedChatsIds ?? [] }, data === null);
-    }
-  }
-
-  _broadcast(data: Partial<ManagerSubscribeData>): void {
-    Object.keys(this._watchers).forEach((watcherId) => {
-      this._callWatcher(watcherId, data);
-    });
   }
 }
 

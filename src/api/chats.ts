@@ -54,7 +54,7 @@ export const get: RequestHandler<Record<string, never>, GetOutput, void> = (req,
 
     const watcherId = manager.subscribe(userId as string, (data) => {
       clearTimeout(timerId);
-      res.json(data);
+      res.json(data ?? { chats: [], deletedChatsIds: [] });
       manager.unsubscribe(watcherId);
     });
   } else {

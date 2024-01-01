@@ -35,7 +35,7 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
 
       const watcherId = chat.subscribe(req.session.userId as string, (data) => {
         clearTimeout(timerId);
-        res.json(data);
+        res.json(data ?? { messages: [] });
         chat.unsubscribe(watcherId as string);
       });
 

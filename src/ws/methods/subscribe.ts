@@ -46,8 +46,8 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = (
         chat.unsubscribe(watcherId as WatcherId);
       };
 
-      const watcherId = chat.subscribe(userId, (data, isUnsubscribed) => {
-        if (isUnsubscribed) {
+      const watcherId = chat.subscribe(userId, (data) => {
+        if (data === null) {
           ws.removeEventListener('error', unsubscribeWatcher);
           ws.removeEventListener('close', unsubscribeWatcher);
           connectionManager.deleteSubscribed(chat.id);

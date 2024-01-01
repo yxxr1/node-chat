@@ -39,22 +39,26 @@ const wsHandler: WebsocketRequestHandler = (ws, req) => {
     }),
   );
 
+  const unsubscribeWatcher = () => {
+    manager.unsubscribe(managerWatcherId);
+  };
+
   const managerWatcherId = manager.subscribe(userId as string, (data) => {
-    const message: WSMessage = {
-      type: 'WATCH_CHATS',
-      payload: data,
-    };
+    if (data === null) {
+      ws.removeEventListener('error', unsubscribeWatcher);
+      ws.removeEventListener('close', unsubscribeWatcher);
+    } else {
+      const message: WSMessage = {
+        type: 'WATCH_CHATS',
+        payload: data,
+      };
 
-    ws.send(JSON.stringify(message));
+      ws.send(JSON.stringify(message));
+    }
   });
 
-  ws.on('error', () => {
-    manager.unsubscribe(managerWatcherId);
-  });
-
-  ws.on('close', () => {
-    manager.unsubscribe(managerWatcherId);
-  });
+  ws.on('error', unsubscribeWatcher);
+  ws.on('close', unsubscribeWatcher);
 };
 
 export const initWs = (app: Application) => {
