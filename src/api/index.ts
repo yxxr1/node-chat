@@ -2,7 +2,7 @@ import { Express } from 'express';
 import { body, query } from 'express-validator';
 import { checkSessionMiddleware } from '@middleware';
 import { getNameChain, getIdChain } from '@utils/validation';
-import { CONNECTION_METHODS } from '@const/settings';
+import { CONNECTION_METHODS, UI_THEMES } from '@const/settings';
 import { get as userGet, post as userPost } from '@api/user';
 import { get as chatsGet, post as chatsPost } from '@api/chats';
 import { post as joinPost } from '@api/join';
@@ -19,10 +19,13 @@ export const initApi = (app: Express) => {
     '/user',
     checkSessionMiddleware,
     getNameChain('name'),
-    body('settings').isObject().withMessage('Settings must be an object').optional(),
     body('settings.connectionMethod')
       .matches(`^(${CONNECTION_METHODS.HTTP}|${CONNECTION_METHODS.WS})$`)
       .withMessage(`Available connections methods are '${CONNECTION_METHODS.HTTP}', '${CONNECTION_METHODS.WS}'`)
+      .optional(),
+    body('settings.theme')
+      .matches(`^(${UI_THEMES.LIGHT}|${UI_THEMES.DARK})$`)
+      .withMessage(`Available themes are '${UI_THEMES.LIGHT}', '${UI_THEMES.DARK}'`)
       .optional(),
     userPost,
   );

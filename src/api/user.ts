@@ -13,12 +13,10 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
 
   req.session.name = name;
 
-  if (settings?.connectionMethod) {
-    const { connectionMethod } = settings;
-
+  if (settings) {
     req.session.settings = {
       ...req.session.settings,
-      connectionMethod,
+      ...settings,
     };
   }
 
