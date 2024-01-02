@@ -15,28 +15,31 @@ const wsHandler: WebsocketRequestHandler = (ws, req) => {
 
   ws.on(
     'message',
-    getMessageHandler({
-      PUBLISH_MESSAGE: (payload: PublishPayload) => {
-        if (isId(payload.chatId) && isValidMessage(payload.message)) {
-          publish(
-            {
-              ...payload,
-              message: payload.message.trim(),
-            },
-            req.session as SessionData,
-            ws,
-          );
-        }
+    getMessageHandler(
+      {
+        PUBLISH_MESSAGE: (payload: PublishPayload) => {
+          if (isId(payload.chatId) && isValidMessage(payload.message)) {
+            publish(
+              {
+                ...payload,
+                message: payload.message.trim(),
+              },
+              req.session as SessionData,
+              ws,
+            );
+          }
+        },
+        SUBSCRIBE_CHAT: (payload: SubscribePayload) => {
+          if (
+            isId(payload.chatId) &&
+            (isId(payload.lastMessageId) || payload.lastMessageId === undefined || payload.lastMessageId === null)
+          ) {
+            subscribe(payload, req.session as SessionData, ws, { connectionManager });
+          }
+        },
       },
-      SUBSCRIBE_CHAT: (payload: SubscribePayload) => {
-        if (
-          isId(payload.chatId) &&
-          (isId(payload.lastMessageId) || payload.lastMessageId === undefined || payload.lastMessageId === null)
-        ) {
-          subscribe(payload, req.session as SessionData, ws, { connectionManager });
-        }
-      },
-    }),
+      req,
+    ),
   );
 
   const unsubscribeWatcher = () => {

@@ -1,10 +1,12 @@
+import { Request } from 'express';
+
 type MessageHandler = {
   [type: string]: (payload: any) => void;
 };
 
 const isObject = (value: any) => value && typeof value === 'object';
 
-export const getMessageHandler = (handlers: MessageHandler) => (data: string) => {
+export const getMessageHandler = (handlers: MessageHandler, req: Request) => (data: string) => {
   try {
     const message: any = JSON.parse(data);
 
@@ -12,7 +14,9 @@ export const getMessageHandler = (handlers: MessageHandler) => (data: string) =>
       const { type, payload } = message;
 
       if (typeof type === 'string' && isObject(payload)) {
-        handlers[type]?.(payload);
+        req.session.reload(() => {
+          handlers[type]?.(payload);
+        });
       }
     }
   } catch (e: unknown) {
