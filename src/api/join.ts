@@ -15,8 +15,8 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
   const chat = manager.getChat(chatId);
 
   if (chat) {
-    const messages = chat.join(req.session.userId as string, req.session.name as string);
-    res.json({ id: chat.id, name: chat.name, messages });
+    chat.join(req.session.userId as string, req.session.name as string);
+    res.json(chat.getChatEntity(req.session.userId as string));
   } else {
     throw new ChatNotFound();
   }

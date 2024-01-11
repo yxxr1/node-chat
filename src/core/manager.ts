@@ -1,14 +1,23 @@
-import { UserId } from '@interfaces/core';
+import { UserId, SubscribeAction } from '@interfaces/core';
 import { Chat as ChatType } from '@interfaces/api-types';
-import { Subscribable } from '@core/subscribable';
-import { Chat } from '@core/chat';
+import { Subscribable, DEFAULT_TYPE, WithUnsubscribeAction } from '@core/subscribable';
+import { Chat, CHAT_SUBSCRIBE_TYPES, ChatChatUpdatedSubscribeData } from '@core/chat';
+import { MAIN_CHAT_NAME } from '@const/common';
 
-export type ManagerSubscribeData = {
-  chats: ChatType[];
-  deletedChatsIds: ChatType['id'][];
-};
+export const MANAGER_SUBSCRIBE_TYPES = {
+  DEFAULT: DEFAULT_TYPE,
+  CHAT_UPDATED: 'CHAT_UPDATED',
+} as const;
 
-const MAIN_CHAT_NAME = 'main';
+export type ManagerDefaultSubscribeData = SubscribeAction<
+  (typeof MANAGER_SUBSCRIBE_TYPES)['DEFAULT'],
+  { newChats: ChatType[]; deletedChatsIds: ChatType['id'][] }
+>;
+export type ManagerChatUpdatedSubscribeData = SubscribeAction<
+  (typeof MANAGER_SUBSCRIBE_TYPES)['CHAT_UPDATED'],
+  ChatChatUpdatedSubscribeData['payload']
+>;
+export type ManagerSubscribeData = WithUnsubscribeAction<ManagerDefaultSubscribeData | ManagerChatUpdatedSubscribeData>;
 
 class Manager extends Subscribable<ManagerSubscribeData> {
   chats: Chat[] = [];
@@ -16,7 +25,7 @@ class Manager extends Subscribable<ManagerSubscribeData> {
   constructor() {
     super();
 
-    this.chats.push(new Chat(MAIN_CHAT_NAME));
+    this.addChat(new Chat(MAIN_CHAT_NAME));
   }
 
   getChat(chatId: Chat['id']): Chat | undefined {
@@ -25,7 +34,20 @@ class Manager extends Subscribable<ManagerSubscribeData> {
 
   addChat(chat: Chat): void {
     this.chats.push(chat);
-    this._broadcast({ chats: [{ id: chat.id, name: chat.name, messages: [] }], deletedChatsIds: [] });
+    chat.subscribe<ChatChatUpdatedSubscribeData>(
+      null,
+      ({ type, payload }) => {
+        if (type === CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED) {
+          this._broadcast<ManagerChatUpdatedSubscribeData>(payload, MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED);
+        }
+      },
+      CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED,
+    );
+
+    this._broadcast<ManagerDefaultSubscribeData>({
+      newChats: [chat.getChatEntity(null, false)],
+      deletedChatsIds: [],
+    });
   }
 
   deleteChat(chatId: Chat['id']): void {
@@ -34,7 +56,7 @@ class Manager extends Subscribable<ManagerSubscribeData> {
 
       if (match) {
         chat._closeChat();
-        this._broadcast({ deletedChatsIds: [chatId], chats: [] });
+        this._broadcast<ManagerDefaultSubscribeData>({ deletedChatsIds: [chatId], newChats: [] });
       }
 
       return !match;

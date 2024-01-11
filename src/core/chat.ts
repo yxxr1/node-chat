@@ -1,13 +1,21 @@
 import { nanoid } from 'nanoid';
-import { UserId, WatcherId, WatcherCallback } from '@interfaces/core';
-import { Message as MessageType } from '@interfaces/api-types';
+import { UserId, WatcherId, WatcherCallback, SubscribeAction } from '@interfaces/core';
+import { Message as MessageType, Chat as ChatType } from '@interfaces/api-types';
 import { MESSAGES_PAGE_SIZE } from '@const/limits';
-import { Subscribable } from '@core/subscribable';
+import { Subscribable, DEFAULT_TYPE, WithUnsubscribeAction } from '@core/subscribable';
 import { Message, SERVICE_TYPES } from '@core/message';
 
-export type ChatSubscribeData = {
-  messages: MessageType[];
-};
+export const CHAT_SUBSCRIBE_TYPES = {
+  DEFAULT: DEFAULT_TYPE,
+  CHAT_UPDATED: 'CHAT_UPDATED',
+} as const;
+
+export type ChatDefaultSubscribeData = SubscribeAction<(typeof CHAT_SUBSCRIBE_TYPES)['DEFAULT'], { messages: MessageType[] }>;
+export type ChatChatUpdatedSubscribeData = SubscribeAction<
+  (typeof CHAT_SUBSCRIBE_TYPES)['CHAT_UPDATED'],
+  { chatId: ChatType['id']; onlyForJoined: boolean }
+>;
+export type ChatSubscribeData = WithUnsubscribeAction<ChatDefaultSubscribeData | ChatChatUpdatedSubscribeData>;
 
 export class Chat extends Subscribable<ChatSubscribeData, null> {
   id: string;
@@ -24,22 +32,27 @@ export class Chat extends Subscribable<ChatSubscribeData, null> {
     this.name = name;
   }
 
-  subscribe(userId: UserId, callback: WatcherCallback<ChatSubscribeData>): WatcherId | null {
-    if (this.isJoined(userId)) {
-      return super.subscribe(userId, callback);
+  subscribe<SubscribeData extends SubscribeAction = ChatSubscribeData>(
+    userId: UserId | null,
+    callback: WatcherCallback<WithUnsubscribeAction<SubscribeData>>,
+    type: ChatSubscribeData['type'] = CHAT_SUBSCRIBE_TYPES['DEFAULT'],
+  ): WatcherId | null {
+    if (userId === null || this.isJoined(userId)) {
+      return super.subscribe<SubscribeData>(userId, callback, type);
     }
 
     return null;
   }
 
-  join(userId: UserId, userName: string | null): Message[] {
+  join(userId: UserId, userName: string | null): number {
     if (!this.isJoined(userId)) {
       this.joinedUsers.push(userId);
 
+      this._broadcast<ChatChatUpdatedSubscribeData>({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
       this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_JOINED);
     }
 
-    return this._getMessages();
+    return this.joinedUsers.length;
   }
 
   publish(text: string, fromId: UserId, fromName: string | null): Message | null {
@@ -56,6 +69,7 @@ export class Chat extends Subscribable<ChatSubscribeData, null> {
 
       this.joinedUsers = this.joinedUsers.filter((joinedUserId) => joinedUserId !== userId);
 
+      this._broadcast<ChatChatUpdatedSubscribeData>({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
       this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_LEFT);
 
       return this.joinedUsers.length;
@@ -76,13 +90,24 @@ export class Chat extends Subscribable<ChatSubscribeData, null> {
     return null;
   }
 
+  getChatEntity(userId?: UserId | null, withMessages = true): ChatType {
+    const isJoined = !!userId && this.isJoined(userId);
+
+    return {
+      id: this.id,
+      name: this.name,
+      joinedCount: isJoined ? this.joinedUsers.length : null,
+      messages: isJoined && withMessages ? this._getMessages() : [],
+    };
+  }
+
   _addMessage(...messageParams: ConstructorParameters<typeof Message>): Message {
     const index = this._messages.length ? this._messages[this._messages.length - 1].index + 1 : 0;
     const message = new Message(...messageParams);
     message.setIndex(index);
     this._messages.push(message);
 
-    this._broadcast({ messages: [message] });
+    this._broadcast<ChatDefaultSubscribeData>({ messages: [message] });
 
     return message;
   }
@@ -107,9 +132,7 @@ export class Chat extends Subscribable<ChatSubscribeData, null> {
   }
 
   _closeChat(): void {
-    Object.keys(this._watchers).forEach((watcherId) => {
-      this._callWatcher(watcherId, null);
-    });
+    this._closeAllWatchers();
     this._watchers = {};
     this._messages = [];
     this.joinedUsers = [];

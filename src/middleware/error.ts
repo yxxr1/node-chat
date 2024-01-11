@@ -10,6 +10,7 @@ export const errorMiddleware: ErrorRequestHandler = (err, req, res, next) => {
     res.statusCode = 413;
     res.json({ message: 'Payload Too Large' });
   } else {
+    console.error(err);
     res.statusCode = 400;
     res.json({ message: 'Bad Request' });
   }

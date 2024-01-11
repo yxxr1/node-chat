@@ -1,13 +1,21 @@
 import { nanoid } from 'nanoid';
-import { Subscribable as SubscribableI, UserId, WatcherCallback, WatcherId, WatchersDictionary } from '@interfaces/core';
+import { UserId, WatcherCallback, WatcherId, WatchersDictionary, SubscribeAction } from '@interfaces/core';
 
-export class Subscribable<Data, SubscribeFailureType = never> implements SubscribableI<Data, SubscribeFailureType> {
-  _watchers: WatchersDictionary<Data> = {};
+export const DEFAULT_TYPE = 'DEFAULT' as const;
+export const UNSUBSCRIBED_TYPE = 'UNSUBSCRIBED' as const;
+export type WithUnsubscribeAction<Actions> = Actions | SubscribeAction<typeof UNSUBSCRIBED_TYPE, Record<string, never>>;
 
-  subscribe(userId: UserId, callback: WatcherCallback<Data>): WatcherId | SubscribeFailureType {
+export class Subscribable<Data extends SubscribeAction, SubscribeFailureType = never> {
+  _watchers: WatchersDictionary<Data | any> = {};
+
+  subscribe<SubscribeData extends SubscribeAction = Data>(
+    userId: UserId | null,
+    callback: WatcherCallback<WithUnsubscribeAction<SubscribeData>>,
+    type: Data['type'] = DEFAULT_TYPE,
+  ): WatcherId | SubscribeFailureType {
     const id = nanoid();
 
-    this._watchers[id] = { id, userId, callback };
+    this._watchers[id] = { id, userId, callback, type };
 
     return id;
   }
@@ -16,24 +24,34 @@ export class Subscribable<Data, SubscribeFailureType = never> implements Subscri
     delete this._watchers[watcherId];
   }
 
-  closeUserWatchers(userId: UserId): void {
+  closeUserWatchers(userId: UserId | null): void {
     Object.values(this._watchers).forEach(({ id, userId: watcherUserId }) => {
       if (watcherUserId === userId) {
-        this._callWatcher(id, null);
+        this._callWatcher(id, { type: UNSUBSCRIBED_TYPE, payload: {} } as Data);
         this.unsubscribe(id);
       }
     });
   }
 
-  _callWatcher(watcherId: WatcherId, data?: Data | null): void {
-    if (this._watchers[watcherId]) {
-      this._watchers[watcherId].callback(data ?? null);
-    }
+  _closeAllWatchers() {
+    Object.values(this._watchers).forEach(({ id }) => {
+      this._callWatcher(id, { type: UNSUBSCRIBED_TYPE, payload: {} } as Data);
+      this.unsubscribe(id);
+    });
   }
 
-  _broadcast(data: Data): void {
-    Object.keys(this._watchers).forEach((watcherId) => {
-      this._callWatcher(watcherId, data);
+  _callWatcher(watcherId: WatcherId, data: Data): void {
+    this._watchers[watcherId]?.callback(data);
+  }
+
+  _broadcast<BroadcastData extends SubscribeAction = Data>(
+    payload: BroadcastData['payload'],
+    type: BroadcastData['type'] = DEFAULT_TYPE,
+  ): void {
+    Object.values(this._watchers).forEach(({ id: watcherId, type: watcherType }) => {
+      if (watcherType === type) {
+        this._callWatcher(watcherId, { type, payload } as Data);
+      }
     });
   }
 }

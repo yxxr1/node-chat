@@ -1,25 +1,22 @@
 import * as WebSocket from 'ws';
 import { SessionData } from 'express-session';
-import { PublishPayload, SubscribePayload } from '@ws/methods';
-import { ChatSubscribeData, ManagerSubscribeData } from '@core';
-import { Chat } from '@interfaces/api-types';
+import { Chat, Message } from '@interfaces/api-types';
 
 export type WSMessage =
   | {
-      type: 'PUBLISH_MESSAGE';
-      payload: PublishPayload;
-    }
-  | {
-      type: 'SUBSCRIBE_CHAT';
-      payload: SubscribePayload;
-    }
-  | {
       type: 'SUBSCRIBED_CHAT';
-      payload: ChatSubscribeData & { chatId: Chat['id'] };
+      payload: {
+        chatId: Chat['id'];
+        messages: Message[];
+      };
     }
   | {
       type: 'WATCH_CHATS';
-      payload: ManagerSubscribeData;
+      payload: {
+        newChats: Chat[];
+        deletedChatsIds: Chat['id'][];
+        updatedChats: Chat[];
+      };
     };
 
 export type WSMessageHandler<Payload, Context = void, Return = void> = (
