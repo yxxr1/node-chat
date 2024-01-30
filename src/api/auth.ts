@@ -13,6 +13,7 @@ const DEFAULT_USER_SETTINGS: UserSettings = {
 
 type PostInput = {
   name: User['name'] | null;
+  settings?: UserSettings;
 };
 type PostOutput =
   | User
@@ -22,7 +23,7 @@ type PostOutput =
     };
 
 export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
-  const { name } = validateParams<PostInput>(req);
+  const { name, settings } = validateParams<PostInput>(req);
 
   if (name === null) {
     if (!req.session.userId) {
@@ -50,8 +51,11 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
 
     req.session.userId = id;
     req.session.name = name;
-    req.session.settings = DEFAULT_USER_SETTINGS;
+    req.session.settings = {
+      ...DEFAULT_USER_SETTINGS,
+      ...settings,
+    };
 
-    res.json({ id, name, settings: DEFAULT_USER_SETTINGS });
+    res.json({ id, name, settings: req.session.settings });
   }
 };

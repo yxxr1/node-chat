@@ -3,6 +3,7 @@ import { Request } from 'express';
 import { urlAlphabet } from 'nanoid';
 import { HttpError } from '@utils/errors';
 import { MAX_MESSAGE_LENGTH } from '@const/limits';
+import { CONNECTION_METHODS, UI_THEMES } from '@const/settings';
 
 const nameRegexp = /^[a-zA-Zа-яА-Я0-9]{3,12}$/;
 
@@ -26,6 +27,17 @@ export const getNameChain = (fieldName: string, allowNull = false): ValidationCh
 
 export const getIdChain = (fieldName: string): ValidationChain =>
   body(fieldName).isString().isLength({ min: 21, max: 21 }).isWhitelisted(urlAlphabet);
+
+export const getSettingsChains = () => [
+  body('settings.connectionMethod')
+    .matches(`^(${CONNECTION_METHODS.HTTP}|${CONNECTION_METHODS.WS})$`)
+    .withMessage(`Available connections methods are '${CONNECTION_METHODS.HTTP}', '${CONNECTION_METHODS.WS}'`)
+    .optional(),
+  body('settings.theme')
+    .matches(`^(${UI_THEMES.LIGHT}|${UI_THEMES.DARK})$`)
+    .withMessage(`Available themes are '${UI_THEMES.LIGHT}', '${UI_THEMES.DARK}'`)
+    .optional(),
+];
 
 const isWhitelisted = (value: string, alphabet: string): boolean => !value.split('').find((char) => !alphabet.includes(char));
 

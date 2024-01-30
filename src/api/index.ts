@@ -1,8 +1,7 @@
 import { Express } from 'express';
 import { body } from 'express-validator';
 import { checkSessionMiddleware } from '@middleware';
-import { getNameChain, getIdChain } from '@utils/validation';
-import { CONNECTION_METHODS, UI_THEMES } from '@const/settings';
+import { getNameChain, getIdChain, getSettingsChains } from '@utils/validation';
 import { get as userGet, post as userPost } from '@api/user';
 import { get as chatsGet, post as chatsPost } from '@api/chats';
 import { get as chatsSubscribeGet } from '@api/chatsSubscribe';
@@ -15,21 +14,8 @@ import { post as messagesPost, DIRECTIONS } from '@api/messages';
 import { MAX_MESSAGE_LENGTH } from '@const/limits';
 
 export const initApi = (app: Express) => {
-  app.post('/auth', getNameChain('name', true), authPost);
-  app.post(
-    '/user',
-    checkSessionMiddleware,
-    getNameChain('name'),
-    body('settings.connectionMethod')
-      .matches(`^(${CONNECTION_METHODS.HTTP}|${CONNECTION_METHODS.WS})$`)
-      .withMessage(`Available connections methods are '${CONNECTION_METHODS.HTTP}', '${CONNECTION_METHODS.WS}'`)
-      .optional(),
-    body('settings.theme')
-      .matches(`^(${UI_THEMES.LIGHT}|${UI_THEMES.DARK})$`)
-      .withMessage(`Available themes are '${UI_THEMES.LIGHT}', '${UI_THEMES.DARK}'`)
-      .optional(),
-    userPost,
-  );
+  app.post('/auth', getNameChain('name', true), ...getSettingsChains(), authPost);
+  app.post('/user', checkSessionMiddleware, getNameChain('name'), ...getSettingsChains(), userPost);
   app.get('/user', checkSessionMiddleware, userGet);
   app.post('/chats', checkSessionMiddleware, getNameChain('name'), chatsPost);
   app.get('/chats', checkSessionMiddleware, chatsGet);
