@@ -4,18 +4,19 @@ import { UserId, WatcherCallback, WatcherId, WatchersDictionary, SubscribeAction
 export const DEFAULT_TYPE = 'DEFAULT' as const;
 export const UNSUBSCRIBED_TYPE = 'UNSUBSCRIBED' as const;
 export type WithUnsubscribeAction<Actions> = Actions | SubscribeAction<typeof UNSUBSCRIBED_TYPE, Record<string, never>>;
+export type CallbackForAction<Actions, ActionType> = WatcherCallback<WithUnsubscribeAction<Extract<Actions, { type: ActionType }>>>;
 
 export class Subscribable<Data extends SubscribeAction, SubscribeFailureType = never> {
-  _watchers: WatchersDictionary<Data | any> = {};
+  _watchers: WatchersDictionary<WithUnsubscribeAction<any>> = {};
 
-  subscribe<SubscribeData extends SubscribeAction = Data>(
+  subscribe<SubscribeType extends Data['type'] = typeof DEFAULT_TYPE>(
     userId: UserId | null,
-    callback: WatcherCallback<WithUnsubscribeAction<SubscribeData>>,
-    type: Data['type'] = DEFAULT_TYPE,
+    callback: CallbackForAction<Data, SubscribeType>,
+    type?: SubscribeType,
   ): WatcherId | SubscribeFailureType {
     const id = nanoid();
 
-    this._watchers[id] = { id, userId, callback, type };
+    this._watchers[id] = { id, userId, callback, type: type ?? DEFAULT_TYPE };
 
     return id;
   }

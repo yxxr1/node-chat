@@ -1,8 +1,8 @@
 import { nanoid } from 'nanoid';
-import { UserId, WatcherId, WatcherCallback, SubscribeAction } from '@interfaces/core';
+import { UserId, WatcherId, SubscribeAction } from '@interfaces/core';
 import { Message as MessageType, Chat as ChatType } from '@interfaces/api-types';
 import { MESSAGES_PAGE_SIZE } from '@const/limits';
-import { Subscribable, DEFAULT_TYPE, WithUnsubscribeAction } from '@core/subscribable';
+import { Subscribable, DEFAULT_TYPE, WithUnsubscribeAction, CallbackForAction } from '@core/subscribable';
 import { Message, SERVICE_TYPES } from '@core/message';
 
 export const CHAT_SUBSCRIBE_TYPES = {
@@ -32,13 +32,13 @@ export class Chat extends Subscribable<ChatSubscribeData, null> {
     this.name = name;
   }
 
-  subscribe<SubscribeData extends SubscribeAction = ChatSubscribeData>(
+  subscribe<SubscribeType extends ChatSubscribeData['type'] = typeof CHAT_SUBSCRIBE_TYPES.DEFAULT>(
     userId: UserId | null,
-    callback: WatcherCallback<WithUnsubscribeAction<SubscribeData>>,
-    type: ChatSubscribeData['type'] = CHAT_SUBSCRIBE_TYPES['DEFAULT'],
+    callback: CallbackForAction<ChatSubscribeData, SubscribeType>,
+    type?: SubscribeType,
   ): WatcherId | null {
     if (userId === null || this.isJoined(userId)) {
-      return super.subscribe<SubscribeData>(userId, callback, type);
+      return super.subscribe(userId, callback, type);
     }
 
     return null;

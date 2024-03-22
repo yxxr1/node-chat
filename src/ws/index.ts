@@ -1,7 +1,7 @@
 import { Application, WebsocketRequestHandler } from 'express-ws';
 import { SessionData } from 'express-session';
 import { wsCheckSessionMiddleware } from '@middleware';
-import { manager, MANAGER_SUBSCRIBE_TYPES, ManagerDefaultSubscribeData, ManagerChatUpdatedSubscribeData } from '@core';
+import { manager, MANAGER_SUBSCRIBE_TYPES } from '@core';
 import { isId, isValidMessage } from '@utils/validation';
 import { publish, subscribe, PublishPayload, SubscribePayload } from '@ws/methods';
 import { WSMessage } from '@ws/types';
@@ -49,7 +49,7 @@ const wsHandler: WebsocketRequestHandler = (ws, req) => {
     manager.unsubscribe(managerChatUpdatedWatcherId);
   };
 
-  const managerDefaultWatcherId = manager.subscribe<ManagerDefaultSubscribeData>(userId as string, ({ type, payload }) => {
+  const managerDefaultWatcherId = manager.subscribe(userId as string, ({ type, payload }) => {
     if (type === MANAGER_SUBSCRIBE_TYPES.DEFAULT) {
       const message: WSMessage = {
         type: 'WATCH_CHATS',
@@ -63,7 +63,7 @@ const wsHandler: WebsocketRequestHandler = (ws, req) => {
     }
   });
 
-  const managerChatUpdatedWatcherId = manager.subscribe<ManagerChatUpdatedSubscribeData>(
+  const managerChatUpdatedWatcherId = manager.subscribe(
     userId as string,
     ({ type, payload }) => {
       if (type === MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED) {

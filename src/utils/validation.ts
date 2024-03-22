@@ -7,7 +7,7 @@ import { CONNECTION_METHODS, UI_THEMES } from '@const/settings';
 
 const nameRegexp = /^[a-zA-Zа-яА-Я0-9]{3,12}$/;
 
-export const validateParams = <Params = Record<string, any>>(req: Request): Params => {
+export const validateParams = <Params = Record<string, unknown>>(req: Request): Params => {
   const result = validationResult(req);
 
   if (!result.isEmpty()) {
@@ -41,9 +41,10 @@ export const getSettingsChains = () => [
 
 const isWhitelisted = (value: string, alphabet: string): boolean => !value.split('').find((char) => !alphabet.includes(char));
 
-export const isId = (value: any): boolean => typeof value === 'string' && value.length === 21 && isWhitelisted(value, urlAlphabet);
+export const isId = (value: string | unknown): boolean =>
+  typeof value === 'string' && value.length === 21 && isWhitelisted(value, urlAlphabet);
 
-export const isValidMessage = (value: any): boolean => {
+export const isValidMessage = (value: string | unknown): boolean => {
   if (typeof value === 'string') {
     const trimValue = value.trim();
 

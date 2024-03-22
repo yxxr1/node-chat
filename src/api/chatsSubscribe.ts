@@ -1,5 +1,5 @@
 import { RequestHandler } from 'express';
-import { manager, MANAGER_SUBSCRIBE_TYPES, ManagerDefaultSubscribeData, ManagerChatUpdatedSubscribeData } from '@core';
+import { manager, MANAGER_SUBSCRIBE_TYPES } from '@core';
 import { Chat as ChatType } from '@interfaces/api-types';
 
 const SUBSCRIBE_TIMEOUT = 30000;
@@ -34,11 +34,11 @@ export const get: RequestHandler<Record<string, never>, GetOutput, void> = (req,
     res.json(data);
   };
 
-  const defaultWatcherId = manager.subscribe<ManagerDefaultSubscribeData>(userId as string, ({ type, payload }) => {
+  const defaultWatcherId = manager.subscribe(userId as string, ({ type, payload }) => {
     closeQuery(type === MANAGER_SUBSCRIBE_TYPES.DEFAULT ? { ...payload, updatedChats: [] } : emptyResponse);
   });
 
-  const chatUpdatedWatcherId = manager.subscribe<ManagerChatUpdatedSubscribeData>(
+  const chatUpdatedWatcherId = manager.subscribe(
     userId as string,
     ({ type, payload }) => {
       if (type === MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED) {

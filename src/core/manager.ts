@@ -34,7 +34,7 @@ class Manager extends Subscribable<ManagerSubscribeData> {
 
   addChat(chat: Chat): void {
     this.chats.push(chat);
-    chat.subscribe<ChatChatUpdatedSubscribeData>(
+    chat.subscribe(
       null,
       ({ type, payload }) => {
         if (type === CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED) {

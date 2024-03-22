@@ -1,5 +1,5 @@
 import { RequestHandler } from 'express';
-import { manager, DEFAULT_TYPE, ChatDefaultSubscribeData } from '@core';
+import { manager, DEFAULT_TYPE } from '@core';
 import { ChatNotFound, NotJoinedChat } from '@utils/errors';
 import { validateParams } from '@utils/validation';
 import { Chat, Message } from '@interfaces/api-types';
@@ -33,7 +33,7 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
     } else {
       let timerId: NodeJS.Timeout;
 
-      const watcherId = chat.subscribe<ChatDefaultSubscribeData>(req.session.userId as string, ({ type, payload }) => {
+      const watcherId = chat.subscribe(req.session.userId as string, ({ type, payload }) => {
         clearTimeout(timerId);
 
         if (type === DEFAULT_TYPE) {

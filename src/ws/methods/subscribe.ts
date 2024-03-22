@@ -1,5 +1,5 @@
 import { WSMessageHandler } from '@ws/types';
-import { manager, DEFAULT_TYPE, ChatDefaultSubscribeData } from '@core';
+import { manager, DEFAULT_TYPE } from '@core';
 import { Chat, Message } from '@interfaces/api-types';
 import { WatcherId } from '@interfaces/core';
 import { WSMessage } from '@ws/types';
@@ -46,7 +46,7 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = (
         chat.unsubscribe(watcherId as WatcherId);
       };
 
-      const watcherId = chat.subscribe<ChatDefaultSubscribeData>(userId, ({ type, payload }) => {
+      const watcherId = chat.subscribe(userId, ({ type, payload }) => {
         if (type === DEFAULT_TYPE) {
           const message: WSMessage = {
             type: 'SUBSCRIBED_CHAT',

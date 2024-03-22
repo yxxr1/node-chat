@@ -2,7 +2,7 @@ export type WatcherCallback<Data> = (data: Data) => void;
 export type WatcherId = string;
 export type UserId = string;
 export type WatcherType = 'DEFAULT' | 'UNSUBSCRIBED' | string;
-export type SubscribeAction<Type = WatcherType, Payload = Record<string, any>> = { type: Type; payload: Payload };
+export type SubscribeAction<Type = WatcherType, Payload = Record<string, unknown>> = { type: Type; payload: Payload };
 
 export type ConnectionRecord<Data> = {
   id: WatcherId;
