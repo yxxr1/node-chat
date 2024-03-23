@@ -38,16 +38,19 @@ class Manager extends Subscribable<ManagerSubscribeData> {
       null,
       ({ type, payload }) => {
         if (type === CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED) {
-          this._broadcast<ManagerChatUpdatedSubscribeData>(payload, MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED);
+          this._broadcast(payload, MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED);
         }
       },
       CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED,
     );
 
-    this._broadcast<ManagerDefaultSubscribeData>({
-      newChats: [chat.getChatEntity(null, false)],
-      deletedChatsIds: [],
-    });
+    this._broadcast(
+      {
+        newChats: [chat.getChatEntity(null, false)],
+        deletedChatsIds: [],
+      },
+      MANAGER_SUBSCRIBE_TYPES.DEFAULT,
+    );
   }
 
   deleteChat(chatId: Chat['id']): void {
@@ -56,7 +59,7 @@ class Manager extends Subscribable<ManagerSubscribeData> {
 
       if (match) {
         chat._closeChat();
-        this._broadcast<ManagerDefaultSubscribeData>({ deletedChatsIds: [chatId], newChats: [] });
+        this._broadcast({ deletedChatsIds: [chatId], newChats: [] }, MANAGER_SUBSCRIBE_TYPES.DEFAULT);
       }
 
       return !match;

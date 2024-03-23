@@ -48,7 +48,7 @@ export class Chat extends Subscribable<ChatSubscribeData, null> {
     if (!this.isJoined(userId)) {
       this.joinedUsers.push(userId);
 
-      this._broadcast<ChatChatUpdatedSubscribeData>({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
+      this._broadcast({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
       this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_JOINED);
     }
 
@@ -69,7 +69,7 @@ export class Chat extends Subscribable<ChatSubscribeData, null> {
 
       this.joinedUsers = this.joinedUsers.filter((joinedUserId) => joinedUserId !== userId);
 
-      this._broadcast<ChatChatUpdatedSubscribeData>({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
+      this._broadcast({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
       this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_LEFT);
 
       return this.joinedUsers.length;
@@ -107,7 +107,7 @@ export class Chat extends Subscribable<ChatSubscribeData, null> {
     message.setIndex(index);
     this._messages.push(message);
 
-    this._broadcast<ChatDefaultSubscribeData>({ messages: [message] });
+    this._broadcast({ messages: [message] }, CHAT_SUBSCRIBE_TYPES.DEFAULT);
 
     return message;
   }
