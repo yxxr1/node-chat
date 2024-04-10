@@ -9,7 +9,7 @@ type PostInput = {
 };
 type PostOutput = ChatType;
 
-export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
+export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = async (req, res) => {
   const { name } = validateParams<PostInput>(req);
 
   if (manager.chats.find(({ name: existingName }) => existingName === name)) {
@@ -19,7 +19,7 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
   const chat = new Chat(name, req.session.userId);
   manager.addChat(chat);
 
-  res.json(chat.getChatEntity());
+  res.json(await chat.getChatEntity());
 };
 
 type GetOutput = {
@@ -27,10 +27,10 @@ type GetOutput = {
   joinedChatsIds: ChatType['id'][];
 };
 
-export const get: RequestHandler<Record<string, never>, GetOutput, void> = (req, res) => {
+export const get: RequestHandler<Record<string, never>, GetOutput, void> = async (req, res) => {
   const { userId } = req.session;
 
-  const chats = manager.chats.map((chat) => chat.getChatEntity(userId as string));
-  const joinedChatsIds = manager.getUserJoinedChats(userId as string).map(({ id }) => id);
+  const chats = await Promise.all(manager.chats.map((chat) => chat.getChatEntity(userId as string)));
+  const joinedChatsIds = (await manager.getUserJoinedChats(userId as string)).map(({ id }) => id);
   res.json({ chats, joinedChatsIds });
 };

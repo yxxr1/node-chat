@@ -3,6 +3,7 @@ import { Chat as ChatType } from '@interfaces/api-types';
 import { Subscribable, DEFAULT_TYPE, WithUnsubscribeAction } from '@core/subscribable';
 import { Chat, CHAT_SUBSCRIBE_TYPES, ChatChatUpdatedSubscribeData } from '@core/chat';
 import { MAIN_CHAT_NAME } from '@const/common';
+import { chatsCollection } from './db';
 
 export const MANAGER_SUBSCRIBE_TYPES = {
   DEFAULT: DEFAULT_TYPE,
@@ -22,19 +23,25 @@ export type ManagerSubscribeData = WithUnsubscribeAction<ManagerDefaultSubscribe
 class Manager extends Subscribable<ManagerSubscribeData> {
   chats: Chat[] = [];
 
-  constructor() {
-    super();
+  async initChats() {
+    const chats = await chatsCollection.find().project({ id: 1, creatorId: 1, name: 1 });
 
-    this.addChat(new Chat(MAIN_CHAT_NAME));
+    if (await chats.hasNext()) {
+      chats.forEach(({ id, creatorId, name }) => {
+        this.addChat(new Chat(name, creatorId, id));
+      });
+    } else {
+      this.addChat(new Chat(MAIN_CHAT_NAME));
+    }
   }
 
   getChat(chatId: Chat['id']): Chat | undefined {
     return this.chats.find(({ id }) => id === chatId);
   }
 
-  addChat(chat: Chat): void {
+  async addChat(chat: Chat): Promise<void> {
     this.chats.push(chat);
-    chat.subscribe(
+    await chat.subscribe(
       null,
       ({ type, payload }) => {
         if (type === CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED) {
@@ -46,7 +53,7 @@ class Manager extends Subscribable<ManagerSubscribeData> {
 
     this._broadcast(
       {
-        newChats: [chat.getChatEntity(null, false)],
+        newChats: [await chat.getChatEntity(null, false)],
         deletedChatsIds: [],
       },
       MANAGER_SUBSCRIBE_TYPES.DEFAULT,
@@ -66,9 +73,12 @@ class Manager extends Subscribable<ManagerSubscribeData> {
     });
   }
 
-  getUserJoinedChats(userId: UserId) {
-    return this.chats.filter((chat) => chat.isJoined(userId));
+  async getUserJoinedChats(userId: UserId): Promise<Chat[]> {
+    const isJoined = await Promise.all(this.chats.map((chat) => chat.isJoined(userId)));
+
+    return this.chats.filter((chat, index) => isJoined[index]);
   }
 }
 
 export const manager = new Manager();
+manager.initChats();

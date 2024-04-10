@@ -22,7 +22,7 @@ type PostOutput =
       name: null;
     };
 
-export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
+export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = async (req, res) => {
   const { name, settings } = validateParams<PostInput>(req);
 
   if (name === null) {
@@ -31,8 +31,8 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
     }
 
     manager.closeUserWatchers(req.session.userId);
-    manager.getUserJoinedChats(req.session.userId as string).forEach((chat) => {
-      const count = chat.quit(req.session.userId as string, req.session.name as string);
+    (await manager.getUserJoinedChats(req.session.userId as string)).forEach(async (chat) => {
+      const count = await chat.quit(req.session.userId as string, req.session.name as string);
 
       if (count === 0) {
         manager.deleteChat(chat.id);

@@ -10,13 +10,13 @@ type PostInput = {
 };
 type PostOutput = Message;
 
-export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
+export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = async (req, res) => {
   const { chatId, message } = validateParams<PostInput>(req);
 
   const chat = manager.getChat(chatId);
 
   if (chat) {
-    const result = chat.publish(message, req.session.userId as string, req.session.name as string);
+    const result = await chat.publish(message, req.session.userId as string, req.session.name as string);
 
     if (result === null) {
       throw new NotJoinedChat();

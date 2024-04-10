@@ -9,11 +9,11 @@ export type CallbackForAction<Actions, ActionType> = WatcherCallback<WithUnsubsc
 export class Subscribable<Data extends SubscribeAction, SubscribeFailureType = never> {
   _watchers: WatchersDictionary<WithUnsubscribeAction<any>> = {};
 
-  subscribe<SubscribeType extends Data['type'] = typeof DEFAULT_TYPE>(
+  async subscribe<SubscribeType extends Data['type'] = typeof DEFAULT_TYPE>(
     userId: UserId | null,
     callback: CallbackForAction<Data, SubscribeType>,
     type?: SubscribeType,
-  ): WatcherId | SubscribeFailureType {
+  ): Promise<WatcherId | SubscribeFailureType> {
     const id = nanoid();
 
     this._watchers[id] = { id, userId, callback, type: type ?? DEFAULT_TYPE };

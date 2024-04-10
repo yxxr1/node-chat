@@ -9,14 +9,14 @@ type PostInput = {
 };
 type PostOutput = Chat;
 
-export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
+export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = async (req, res) => {
   const { chatId } = validateParams<PostInput>(req);
 
   const chat = manager.getChat(chatId);
 
   if (chat) {
-    chat.join(req.session.userId as string, req.session.name as string);
-    res.json(chat.getChatEntity(req.session.userId as string));
+    await chat.join(req.session.userId as string, req.session.name as string);
+    res.json(await chat.getChatEntity(req.session.userId as string));
   } else {
     throw new ChatNotFound();
   }

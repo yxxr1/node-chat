@@ -14,7 +14,7 @@ type PostOutput = {
   messages: Message[];
 };
 
-export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
+export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = async (req, res) => {
   const { chatId, lastMessageId } = validateParams<PostInput>(req);
 
   const chat = manager.getChat(chatId);
@@ -23,7 +23,7 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
     let unreceivedMessages: Message[] | null = [];
 
     if (lastMessageId) {
-      unreceivedMessages = chat.getMessages(req.session.userId as string, lastMessageId);
+      unreceivedMessages = await chat.getMessages(req.session.userId as string, lastMessageId);
     }
 
     if (unreceivedMessages === null) {
@@ -33,7 +33,7 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
     } else {
       let timerId: NodeJS.Timeout;
 
-      const watcherId = chat.subscribe(req.session.userId as string, ({ type, payload }) => {
+      const watcherId = await chat.subscribe(req.session.userId as string, ({ type, payload }) => {
         clearTimeout(timerId);
 
         if (type === DEFAULT_TYPE) {

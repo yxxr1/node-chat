@@ -23,13 +23,13 @@ type PostOutput = {
   messages: Message[];
 };
 
-export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = (req, res) => {
+export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = async (req, res) => {
   const { chatId, lastMessageId, direction } = validateParams<PostInput>(req);
 
   const chat = manager.getChat(chatId);
 
   if (chat) {
-    const messages = chat.getMessages(req.session.userId as string, lastMessageId, DIRECTION_MAP[direction]);
+    const messages = await chat.getMessages(req.session.userId as string, lastMessageId, DIRECTION_MAP[direction]);
 
     if (messages === null) {
       throw new NotJoinedChat();

@@ -11,7 +11,7 @@ type GetOutput = {
 };
 const emptyResponse = { newChats: [], deletedChatsIds: [], updatedChats: [] };
 
-export const get: RequestHandler<Record<string, never>, GetOutput, void> = (req, res) => {
+export const get: RequestHandler<Record<string, never>, GetOutput, void> = async (req, res) => {
   const { userId } = req.session;
 
   const timerId = setTimeout(() => {
@@ -34,19 +34,19 @@ export const get: RequestHandler<Record<string, never>, GetOutput, void> = (req,
     res.json(data);
   };
 
-  const defaultWatcherId = manager.subscribe(userId as string, ({ type, payload }) => {
+  const defaultWatcherId = await manager.subscribe(userId as string, ({ type, payload }) => {
     closeQuery(type === MANAGER_SUBSCRIBE_TYPES.DEFAULT ? { ...payload, updatedChats: [] } : emptyResponse);
   });
 
-  const chatUpdatedWatcherId = manager.subscribe(
+  const chatUpdatedWatcherId = await manager.subscribe(
     userId as string,
-    ({ type, payload }) => {
+    async ({ type, payload }) => {
       if (type === MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED) {
         const { chatId, onlyForJoined } = payload;
         const chat = manager.getChat(chatId);
 
-        if (chat && (!onlyForJoined || chat.isJoined(userId as string))) {
-          closeQuery({ updatedChats: [chat.getChatEntity(userId as string, false)], newChats: [], deletedChatsIds: [] });
+        if (chat && (!onlyForJoined || (await chat.isJoined(userId as string)))) {
+          closeQuery({ updatedChats: [await chat.getChatEntity(userId as string, false)], newChats: [], deletedChatsIds: [] });
         }
       } else {
         closeQuery(emptyResponse);

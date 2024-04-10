@@ -14,7 +14,7 @@ type Context = {
   connectionManager: WSConnectionManager;
 };
 
-export const subscribe: WSMessageHandler<SubscribePayload, Context> = (
+export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
   { chatId, lastMessageId },
   { userId },
   ws,
@@ -27,7 +27,7 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = (
       let unreceivedMessages: Message[] | null = [];
 
       if (lastMessageId) {
-        unreceivedMessages = chat.getMessages(userId, lastMessageId);
+        unreceivedMessages = await chat.getMessages(userId, lastMessageId);
       }
 
       if (unreceivedMessages !== null && unreceivedMessages.length) {
@@ -46,7 +46,7 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = (
         chat.unsubscribe(watcherId as WatcherId);
       };
 
-      const watcherId = chat.subscribe(userId, ({ type, payload }) => {
+      const watcherId = await chat.subscribe(userId, ({ type, payload }) => {
         if (type === DEFAULT_TYPE) {
           const message: WSMessage = {
             type: 'SUBSCRIBED_CHAT',

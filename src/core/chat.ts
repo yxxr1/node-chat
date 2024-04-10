@@ -1,9 +1,13 @@
 import { nanoid } from 'nanoid';
+import { Collection, Filter, FindOptions } from 'mongodb';
 import { UserId, WatcherId, SubscribeAction } from '@interfaces/core';
-import { Message as MessageType, Chat as ChatType } from '@interfaces/api-types';
+import { Chat as ChatApiType } from '@interfaces/api-types';
+import { Message as MessageType, Chat as ChatType } from '@interfaces/db-types';
 import { MESSAGES_PAGE_SIZE } from '@const/limits';
 import { Subscribable, DEFAULT_TYPE, WithUnsubscribeAction, CallbackForAction } from '@core/subscribable';
 import { Message, SERVICE_TYPES } from '@core/message';
+import { ParametersExceptFirst } from '@utils/types';
+import { chatsCollection } from './db';
 
 export const CHAT_SUBSCRIBE_TYPES = {
   DEFAULT: DEFAULT_TYPE,
@@ -21,120 +25,146 @@ export class Chat extends Subscribable<ChatSubscribeData, null> {
   id: string;
   creatorId?: UserId;
   name: string;
-  joinedUsers: UserId[] = [];
-  _messages: Message[] = [];
 
-  constructor(name: string, creatorId?: UserId) {
+  constructor(name: string, creatorId?: UserId, id?: string) {
     super();
 
-    this.id = nanoid();
+    this.id = id ?? nanoid();
     this.creatorId = creatorId;
     this.name = name;
+
+    if (!id) {
+      const chat = {
+        id: this.id,
+        creatorId,
+        name,
+        joinedUsers: [],
+        messages: [],
+      };
+
+      chatsCollection.insertOne(chat);
+    }
   }
 
-  subscribe<SubscribeType extends ChatSubscribeData['type'] = typeof CHAT_SUBSCRIBE_TYPES.DEFAULT>(
+  async subscribe<SubscribeType extends ChatSubscribeData['type'] = typeof CHAT_SUBSCRIBE_TYPES.DEFAULT>(
     userId: UserId | null,
     callback: CallbackForAction<ChatSubscribeData, SubscribeType>,
     type?: SubscribeType,
-  ): WatcherId | null {
-    if (userId === null || this.isJoined(userId)) {
+  ): Promise<WatcherId | null> {
+    if (userId === null || (await this.isJoined(userId))) {
       return super.subscribe(userId, callback, type);
     }
 
     return null;
   }
 
-  join(userId: UserId, userName: string | null): number {
-    if (!this.isJoined(userId)) {
-      this.joinedUsers.push(userId);
-
-      this._broadcast({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
-      this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_JOINED);
-    }
-
-    return this.joinedUsers.length;
+  async updateChat(...args: ParametersExceptFirst<Collection<ChatType>['updateOne']>): ReturnType<Collection<ChatType>['updateOne']> {
+    return await chatsCollection.updateOne({ id: this.id }, ...args);
   }
 
-  publish(text: string, fromId: UserId, fromName: string | null): Message | null {
-    if (this.isJoined(fromId)) {
+  async findChat(filter?: Filter<ChatType>, projection?: FindOptions<ChatType>['projection']): Promise<ChatType> {
+    return (await chatsCollection.findOne({ ...filter, id: this.id }, { projection })) as ChatType;
+  }
+
+  async join(userId: UserId, userName: string | null): Promise<boolean> {
+    if (!(await this.isJoined(userId))) {
+      await this.updateChat({ $push: { joinedUsers: userId } });
+
+      this._broadcast({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
+      await this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_JOINED);
+
+      return true;
+    }
+
+    return false;
+  }
+
+  async publish(text: string, fromId: UserId, fromName: string | null): Promise<MessageType | null> {
+    if (await this.isJoined(fromId)) {
       return this._addMessage(text, fromId, fromName);
     }
 
     return null;
   }
 
-  quit(userId: UserId, userName: string | null): number | null {
-    if (this.isJoined(userId)) {
+  async quit(userId: UserId, userName: string | null): Promise<number | null> {
+    if (await this.isJoined(userId)) {
       this.closeUserWatchers(userId);
 
-      this.joinedUsers = this.joinedUsers.filter((joinedUserId) => joinedUserId !== userId);
+      await this.updateChat({ $pull: { joinedUsers: userId } });
 
       this._broadcast({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
-      this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_LEFT);
+      await this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_LEFT);
 
-      return this.joinedUsers.length;
+      return (await this.findChat()).joinedUsers.length;
     }
 
     return null;
   }
 
-  isJoined(userId: UserId): boolean {
-    return this.joinedUsers.includes(userId);
+  async isJoined(userId: UserId): Promise<boolean> {
+    return !!(await this.findChat({ joinedUsers: { $elemMatch: { $eq: userId } } }));
   }
 
-  getMessages(userId: UserId, ...args: Parameters<Chat['_getMessages']>): MessageType[] | null {
-    if (this.isJoined(userId)) {
+  async getMessages(userId: UserId, ...args: Parameters<Chat['_getMessages']>): Promise<MessageType[] | null> {
+    if (await this.isJoined(userId)) {
       return this._getMessages(...args);
     }
 
     return null;
   }
 
-  getChatEntity(userId?: UserId | null, withMessages = true): ChatType {
-    const isJoined = !!userId && this.isJoined(userId);
+  async getChatEntity(userId?: UserId | null, withMessages = true): Promise<ChatApiType> {
+    const isJoined = !!userId && (await this.isJoined(userId));
 
     return {
       id: this.id,
       name: this.name,
-      joinedCount: isJoined ? this.joinedUsers.length : null,
-      messages: isJoined && withMessages ? this._getMessages() : [],
+      joinedCount: isJoined ? (await this.findChat()).joinedUsers.length : null,
+      messages: isJoined && withMessages ? await this._getMessages() : [],
     };
   }
 
-  _addMessage(...messageParams: ConstructorParameters<typeof Message>): Message {
-    const index = this._messages.length ? this._messages[this._messages.length - 1].index + 1 : 0;
+  async _addMessage(...messageParams: ConstructorParameters<typeof Message>): Promise<MessageType> {
+    const lastMessage = (await this.findChat({}, { messages: { $slice: -1 } })).messages;
+    const index = lastMessage.length ? lastMessage[0].index + 1 : 0;
     const message = new Message(...messageParams);
     message.setIndex(index);
-    this._messages.push(message);
+    await this.updateChat({ $push: { messages: message } });
 
     this._broadcast({ messages: [message] }, CHAT_SUBSCRIBE_TYPES.DEFAULT);
 
     return message;
   }
 
-  _getMessages(lastMessageId?: Message['id'], direction: 1 | -1 = 1, pageSize = MESSAGES_PAGE_SIZE): Message[] {
+  async _getMessages(lastMessageId?: MessageType['id'], direction: 1 | -1 = 1, pageSize = MESSAGES_PAGE_SIZE): Promise<MessageType[]> {
     if (lastMessageId) {
-      const lastMessageIndex = this._messages.findIndex(({ id }) => id === lastMessageId);
+      const { messages } = await this.findChat({}, { messages: { $elemMatch: { id: lastMessageId } } });
+      const lastMessageIndex = messages ? messages[0].index : -1;
 
       if (lastMessageIndex === -1) {
         return [];
       }
 
       if (Math.sign(direction) === 1) {
-        return this._messages.slice(lastMessageIndex + 1, lastMessageIndex + pageSize + 1);
+        return (await this.findChat({}, { messages: { $slice: [lastMessageIndex + 1, pageSize] } })).messages;
       } else {
-        const startIndex = lastMessageIndex - pageSize;
-        return this._messages.slice(startIndex < 0 ? 0 : startIndex, lastMessageIndex);
+        const startIndex = pageSize > lastMessageIndex ? 0 : lastMessageIndex - pageSize;
+        const count = lastMessageIndex - startIndex;
+
+        if (count === 0) {
+          return [];
+        }
+
+        return (await this.findChat({}, { messages: { $slice: [startIndex, count] } })).messages;
       }
     }
 
-    return this._messages.slice(-pageSize);
+    return (await this.findChat({}, { messages: { $slice: -pageSize } })).messages;
   }
 
   _closeChat(): void {
     this._closeAllWatchers();
-    this._watchers = {};
-    this._messages = [];
-    this.joinedUsers = [];
+    chatsCollection.deleteOne({ id: this.id });
   }
 }

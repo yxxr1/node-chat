@@ -1,3 +1,5 @@
+import { RequestHandler } from 'express';
+
 export class HttpError extends Error {
   name = 'HttpError';
   status = 0;
@@ -23,3 +25,9 @@ export class NotJoinedChat extends HttpError {
     super(403, 'Not joined to this chat');
   }
 }
+
+export const asyncHandler =
+  (handler: RequestHandler<any>): RequestHandler<any> =>
+  (req, res, next) => {
+    return Promise.resolve(handler(req, res, next)).catch(next);
+  };

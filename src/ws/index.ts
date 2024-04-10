@@ -8,7 +8,7 @@ import { WSMessage } from '@ws/types';
 import { WSConnectionManager } from '@ws/manager';
 import { getMessageHandler } from '@ws/utils';
 
-const wsHandler: WebsocketRequestHandler = (ws, req) => {
+const wsHandler: WebsocketRequestHandler = async (ws, req) => {
   const { userId } = req.session;
 
   const connectionManager = new WSConnectionManager();
@@ -49,7 +49,7 @@ const wsHandler: WebsocketRequestHandler = (ws, req) => {
     manager.unsubscribe(managerChatUpdatedWatcherId);
   };
 
-  const managerDefaultWatcherId = manager.subscribe(userId as string, ({ type, payload }) => {
+  const managerDefaultWatcherId = await manager.subscribe(userId as string, ({ type, payload }) => {
     if (type === MANAGER_SUBSCRIBE_TYPES.DEFAULT) {
       const message: WSMessage = {
         type: 'WATCH_CHATS',
@@ -63,17 +63,17 @@ const wsHandler: WebsocketRequestHandler = (ws, req) => {
     }
   });
 
-  const managerChatUpdatedWatcherId = manager.subscribe(
+  const managerChatUpdatedWatcherId = await manager.subscribe(
     userId as string,
-    ({ type, payload }) => {
+    async ({ type, payload }) => {
       if (type === MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED) {
         const { chatId, onlyForJoined } = payload;
         const chat = manager.getChat(chatId);
 
-        if (chat && (!onlyForJoined || chat.isJoined(userId as string))) {
+        if (chat && (!onlyForJoined || (await chat.isJoined(userId as string)))) {
           const message: WSMessage = {
             type: 'WATCH_CHATS',
-            payload: { updatedChats: [chat.getChatEntity(userId as string, false)], newChats: [], deletedChatsIds: [] },
+            payload: { updatedChats: [await chat.getChatEntity(userId as string, false)], newChats: [], deletedChatsIds: [] },
           };
 
           ws.send(JSON.stringify(message));
