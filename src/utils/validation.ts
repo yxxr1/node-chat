@@ -37,6 +37,8 @@ export const getSettingsChains = () => [
     .matches(`^(${UI_THEMES.LIGHT}|${UI_THEMES.DARK})$`)
     .withMessage(`Available themes are '${UI_THEMES.LIGHT}', '${UI_THEMES.DARK}'`)
     .optional(),
+  body('settings.isNotificationsEnabled').isBoolean().optional(),
+  body('settings.isShowNotificationMessageText').isBoolean().optional(),
 ];
 
 const isWhitelisted = (value: string, alphabet: string): boolean => !value.split('').find((char) => !alphabet.includes(char));

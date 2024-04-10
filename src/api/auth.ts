@@ -9,6 +9,8 @@ import { CONNECTION_METHODS } from '@const/settings';
 const DEFAULT_USER_SETTINGS: UserSettings = {
   connectionMethod: CONNECTION_METHODS.WS,
   theme: 'light',
+  isNotificationsEnabled: false,
+  isShowNotificationMessageText: true,
 };
 
 type PostInput = {
