@@ -62,8 +62,11 @@ export class Chat extends Subscribable<ChatSubscribeData, null> {
     return await chatsCollection.updateOne({ id: this.id }, ...args);
   }
 
-  async findChat(filter?: Filter<ChatType>, projection?: FindOptions<ChatType>['projection']): Promise<ChatType> {
-    return (await chatsCollection.findOne({ ...filter, id: this.id }, { projection })) as ChatType;
+  async findChat<Extra extends object, T = Extra & ChatType>(
+    filter?: Filter<ChatType>,
+    projection?: FindOptions<ChatType>['projection'],
+  ): Promise<T> {
+    return (await chatsCollection.findOne({ ...filter, id: this.id }, { projection })) as T;
   }
 
   async join(userId: UserId, userName: string | null): Promise<boolean> {
@@ -116,11 +119,12 @@ export class Chat extends Subscribable<ChatSubscribeData, null> {
 
   async getChatEntity(userId?: UserId | null, withMessages = true): Promise<ChatApiType> {
     const isJoined = !!userId && (await this.isJoined(userId));
+    const chat = await this.findChat<{ joinedCount: number }>({}, { name: 1, joinedCount: { $size: '$joinedUsers' } });
 
     return {
       id: this.id,
-      name: this.name,
-      joinedCount: isJoined ? (await this.findChat()).joinedUsers.length : null,
+      name: chat.name,
+      joinedCount: isJoined ? chat.joinedCount : null,
       messages: isJoined && withMessages ? await this._getMessages() : [],
     };
   }

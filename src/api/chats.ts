@@ -17,7 +17,7 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
   }
 
   const chat = new Chat(name, req.session.userId);
-  manager.addChat(chat);
+  await manager.addChat(chat);
 
   res.json(await chat.getChatEntity());
 };
