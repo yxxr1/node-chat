@@ -11,8 +11,9 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "noEmit": true,
+    "outDir": "dist",
     "rootDir": "src",
+    "baseUrl": ".",
     "paths": {
       "@config/*": ["src/config/*"],
       "@middleware": ["src/middleware/index.ts"],
@@ -25,11 +26,14 @@
       "@interfaces/*": ["src/interfaces/*"],
       "@ws": ["src/ws/index.ts"],
       "@ws/*": ["src/ws/*"],
-      "@const/*": ["src/const/*"],
+      "@const/*": ["src/const/*"]
     }
   },
   "include": [
-    "src"
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
   ],
   "ts-node": {
     "require": ["tsconfig-paths/register"]
