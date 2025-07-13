@@ -28,10 +28,15 @@ class Manager extends Subscribable<ManagerSubscribeData> {
 
     if (await chats.hasNext()) {
       chats.forEach(({ id, creatorId, name }) => {
-        this.addChat(new Chat(name, creatorId, id));
+        const chat = new Chat(name, creatorId, id);
+        chat.init().then(() => {
+          this.addChat(chat);
+        });
       });
     } else {
-      this.addChat(new Chat(MAIN_CHAT_NAME));
+      const chat = new Chat(MAIN_CHAT_NAME);
+      await chat.init();
+      await this.addChat(chat);
     }
   }
 

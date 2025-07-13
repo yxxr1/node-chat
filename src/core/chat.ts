@@ -32,17 +32,21 @@ export class Chat extends Subscribable<ChatSubscribeData, null> {
     this.id = id ?? nanoid();
     this.creatorId = creatorId;
     this.name = name;
+  }
 
-    if (!id) {
+  async init() {
+    const chat = await chatsCollection.findOne({ id: this.id });
+
+    if (!chat) {
       const chat = {
         id: this.id,
-        creatorId,
-        name,
+        creatorId: this.creatorId,
+        name: this.name,
         joinedUsers: [],
         messages: [],
       };
 
-      chatsCollection.insertOne(chat);
+      return chatsCollection.insertOne(chat);
     }
   }
 
