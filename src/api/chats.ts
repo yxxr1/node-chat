@@ -12,7 +12,7 @@ type PostOutput = ChatType;
 export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = async (req, res) => {
   const { name } = validateParams<PostInput>(req);
 
-  if (manager.chats.find(({ name: existingName }) => existingName === name)) {
+  if (manager.getChatByName(name)) {
     throw new HttpError(403, 'Already exists');
   }
 
@@ -31,7 +31,7 @@ type GetOutput = {
 export const get: RequestHandler<Record<string, never>, GetOutput, void> = async (req, res) => {
   const { userId } = req.session;
 
-  const chats = await Promise.all(manager.chats.map((chat) => chat.getChatEntity(userId as string)));
+  const chats = await manager.getChatEntities(userId as string);
   const joinedChatsIds = (await manager.getUserJoinedChats(userId as string)).map(({ id }) => id);
   res.json({ chats, joinedChatsIds });
 };

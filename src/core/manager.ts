@@ -44,6 +44,12 @@ class Manager extends Subscribable<ManagerSubscribeActions> {
   getChat(chatId: Chat['id']): Chat | undefined {
     return this.chats.find(({ id }) => id === chatId);
   }
+  getChatByName(name: string): Chat | undefined {
+    return this.chats.find(({ name: existingName }) => existingName === name);
+  }
+  async getChatEntities(userId: UserId) {
+    return Promise.all(this.chats.map((chat) => chat.getChatEntity(userId)));
+  }
 
   async addChat(chat: Chat): Promise<void> {
     this.chats.push(chat);
