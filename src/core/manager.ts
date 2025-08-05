@@ -1,7 +1,7 @@
 import { UserId, SubscribeAction } from '@interfaces/core';
 import { Chat as ChatType } from '@interfaces/api-types';
-import { Subscribable, DEFAULT_TYPE, WithUnsubscribeAction } from '@core/subscribable';
-import { Chat, CHAT_SUBSCRIBE_TYPES, ChatChatUpdatedSubscribeData } from '@core/chat';
+import { Subscribable, DEFAULT_TYPE } from '@core/subscribable';
+import { Chat, CHAT_SUBSCRIBE_TYPES, ChatChatUpdatedSubscribeAction } from '@core/chat';
 import { MAIN_CHAT_NAME } from '@const/common';
 import { chatsCollection } from './db';
 
@@ -9,18 +9,19 @@ export const MANAGER_SUBSCRIBE_TYPES = {
   DEFAULT: DEFAULT_TYPE,
   CHAT_UPDATED: 'CHAT_UPDATED',
 } as const;
+type ManagerSubscribeTypes = typeof MANAGER_SUBSCRIBE_TYPES;
 
-export type ManagerDefaultSubscribeData = SubscribeAction<
-  (typeof MANAGER_SUBSCRIBE_TYPES)['DEFAULT'],
+export type ManagerDefaultSubscribeAction = SubscribeAction<
+  ManagerSubscribeTypes['DEFAULT'],
   { newChats: ChatType[]; deletedChatsIds: ChatType['id'][] }
 >;
-export type ManagerChatUpdatedSubscribeData = SubscribeAction<
-  (typeof MANAGER_SUBSCRIBE_TYPES)['CHAT_UPDATED'],
-  ChatChatUpdatedSubscribeData['payload']
+export type ManagerChatUpdatedSubscribeAction = SubscribeAction<
+  ManagerSubscribeTypes['CHAT_UPDATED'],
+  ChatChatUpdatedSubscribeAction['payload']
 >;
-export type ManagerSubscribeData = WithUnsubscribeAction<ManagerDefaultSubscribeData | ManagerChatUpdatedSubscribeData>;
+export type ManagerSubscribeActions = ManagerDefaultSubscribeAction | ManagerChatUpdatedSubscribeAction;
 
-class Manager extends Subscribable<ManagerSubscribeData> {
+class Manager extends Subscribable<ManagerSubscribeActions> {
   chats: Chat[] = [];
 
   async initChats() {
@@ -48,10 +49,8 @@ class Manager extends Subscribable<ManagerSubscribeData> {
     this.chats.push(chat);
     await chat.subscribe(
       null,
-      ({ type, payload }) => {
-        if (type === CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED) {
-          this._broadcast(payload, MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED);
-        }
+      (payload) => {
+        this._broadcast(payload, MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED);
       },
       CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED,
     );

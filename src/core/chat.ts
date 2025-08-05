@@ -1,10 +1,10 @@
 import { nanoid } from 'nanoid';
 import { Collection, Filter, FindOptions } from 'mongodb';
-import { UserId, WatcherId, SubscribeAction } from '@interfaces/core';
+import { UserId, WatcherId, SubscribeAction, CallbackForAction } from '@interfaces/core';
 import { Chat as ChatApiType } from '@interfaces/api-types';
 import { Message as MessageType, Chat as ChatType } from '@interfaces/db-types';
 import { MESSAGES_PAGE_SIZE } from '@const/limits';
-import { Subscribable, DEFAULT_TYPE, WithUnsubscribeAction, CallbackForAction } from '@core/subscribable';
+import { Subscribable, DEFAULT_TYPE } from '@core/subscribable';
 import { Message, SERVICE_TYPES } from '@core/message';
 import { ParametersExceptFirst } from '@utils/types';
 import { chatsCollection } from './db';
@@ -13,15 +13,16 @@ export const CHAT_SUBSCRIBE_TYPES = {
   DEFAULT: DEFAULT_TYPE,
   CHAT_UPDATED: 'CHAT_UPDATED',
 } as const;
+type ChatSubscribeTypes = typeof CHAT_SUBSCRIBE_TYPES;
 
-export type ChatDefaultSubscribeData = SubscribeAction<(typeof CHAT_SUBSCRIBE_TYPES)['DEFAULT'], { messages: MessageType[] }>;
-export type ChatChatUpdatedSubscribeData = SubscribeAction<
-  (typeof CHAT_SUBSCRIBE_TYPES)['CHAT_UPDATED'],
+export type ChatDefaultSubscribeAction = SubscribeAction<ChatSubscribeTypes['DEFAULT'], { messages: MessageType[] }>;
+export type ChatChatUpdatedSubscribeAction = SubscribeAction<
+  ChatSubscribeTypes['CHAT_UPDATED'],
   { chatId: ChatType['id']; onlyForJoined: boolean }
 >;
-export type ChatSubscribeData = WithUnsubscribeAction<ChatDefaultSubscribeData | ChatChatUpdatedSubscribeData>;
+export type ChatSubscribeActions = ChatDefaultSubscribeAction | ChatChatUpdatedSubscribeAction;
 
-export class Chat extends Subscribable<ChatSubscribeData, null> {
+export class Chat extends Subscribable<ChatSubscribeActions> {
   id: string;
   creatorId?: UserId;
   name: string;
@@ -50,13 +51,14 @@ export class Chat extends Subscribable<ChatSubscribeData, null> {
     }
   }
 
-  async subscribe<SubscribeType extends ChatSubscribeData['type'] = typeof CHAT_SUBSCRIBE_TYPES.DEFAULT>(
-    userId: UserId | null,
-    callback: CallbackForAction<ChatSubscribeData, SubscribeType>,
+  async subscribeIfJoined<SubscribeType extends ChatSubscribeActions['type'] = typeof CHAT_SUBSCRIBE_TYPES.DEFAULT>(
+    userId: UserId,
+    callback: CallbackForAction<ChatSubscribeActions, SubscribeType>,
     type?: SubscribeType,
+    onUnsubscribed?: () => void,
   ): Promise<WatcherId | null> {
-    if (userId === null || (await this.isJoined(userId))) {
-      return super.subscribe(userId, callback, type);
+    if (await this.isJoined(userId)) {
+      return super.subscribe(userId, callback, type, onUnsubscribed);
     }
 
     return null;

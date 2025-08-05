@@ -3,8 +3,8 @@ import { SessionData } from 'express-session';
 import { wsCheckSessionMiddleware } from '@middleware';
 import { manager, MANAGER_SUBSCRIBE_TYPES } from '@core';
 import { isId, isValidMessage } from '@utils/validation';
-import { publish, subscribe, PublishPayload, SubscribePayload } from '@ws/methods';
-import { WSMessage } from '@ws/types';
+import { publish, subscribe } from '@ws/methods';
+import { WatchChatsMessage } from '@ws/types';
 import { WSConnectionManager } from '@ws/manager';
 import { getMessageHandler } from '@ws/utils';
 
@@ -17,7 +17,7 @@ const wsHandler: WebsocketRequestHandler = async (ws, req) => {
     'message',
     getMessageHandler(
       {
-        PUBLISH_MESSAGE: (payload: PublishPayload) => {
+        PUBLISH_MESSAGE: (payload) => {
           if (isId(payload.chatId) && isValidMessage(payload.message)) {
             publish(
               {
@@ -29,7 +29,7 @@ const wsHandler: WebsocketRequestHandler = async (ws, req) => {
             );
           }
         },
-        SUBSCRIBE_CHAT: (payload: SubscribePayload) => {
+        SUBSCRIBE_CHAT: (payload) => {
           if (
             isId(payload.chatId) &&
             (isId(payload.lastMessageId) || payload.lastMessageId === undefined || payload.lastMessageId === null)
@@ -49,41 +49,42 @@ const wsHandler: WebsocketRequestHandler = async (ws, req) => {
     manager.unsubscribe(managerChatUpdatedWatcherId);
   };
 
-  const managerDefaultWatcherId = await manager.subscribe(userId as string, ({ type, payload }) => {
-    if (type === MANAGER_SUBSCRIBE_TYPES.DEFAULT) {
-      const message: WSMessage = {
+  const managerDefaultWatcherId = await manager.subscribe(
+    userId as string,
+    (payload) => {
+      const message: WatchChatsMessage = {
         type: 'WATCH_CHATS',
         payload: { ...payload, updatedChats: [] },
       };
 
       ws.send(JSON.stringify(message));
-    } else {
+    },
+    MANAGER_SUBSCRIBE_TYPES.DEFAULT,
+    () => {
       ws.removeEventListener('error', defaultUnsubscribeWatcher);
       ws.removeEventListener('close', defaultUnsubscribeWatcher);
-    }
-  });
+    },
+  );
 
   const managerChatUpdatedWatcherId = await manager.subscribe(
     userId as string,
-    async ({ type, payload }) => {
-      if (type === MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED) {
-        const { chatId, onlyForJoined } = payload;
-        const chat = manager.getChat(chatId);
+    async ({ chatId, onlyForJoined }) => {
+      const chat = manager.getChat(chatId);
 
-        if (chat && (!onlyForJoined || (await chat.isJoined(userId as string)))) {
-          const message: WSMessage = {
-            type: 'WATCH_CHATS',
-            payload: { updatedChats: [await chat.getChatEntity(userId as string, false)], newChats: [], deletedChatsIds: [] },
-          };
+      if (chat && (!onlyForJoined || (await chat.isJoined(userId as string)))) {
+        const message: WatchChatsMessage = {
+          type: 'WATCH_CHATS',
+          payload: { updatedChats: [await chat.getChatEntity(userId as string, false)], newChats: [], deletedChatsIds: [] },
+        };
 
-          ws.send(JSON.stringify(message));
-        }
-      } else {
-        ws.removeEventListener('error', chatUpdatedUnsubscribeWatcher);
-        ws.removeEventListener('close', chatUpdatedUnsubscribeWatcher);
+        ws.send(JSON.stringify(message));
       }
     },
     MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED,
+    () => {
+      ws.removeEventListener('error', chatUpdatedUnsubscribeWatcher);
+      ws.removeEventListener('close', chatUpdatedUnsubscribeWatcher);
+    },
   );
 
   ws.on('error', defaultUnsubscribeWatcher);

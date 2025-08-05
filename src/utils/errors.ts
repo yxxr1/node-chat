@@ -27,7 +27,7 @@ export class NotJoinedChat extends HttpError {
 }
 
 export const asyncHandler =
-  (handler: RequestHandler<any>): RequestHandler<any> =>
+  <T>(handler: RequestHandler<T>): RequestHandler<T> =>
   (req, res, next) => {
     return Promise.resolve(handler(req, res, next)).catch(next);
   };

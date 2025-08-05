@@ -1,15 +1,23 @@
-export type WatcherCallback<Data> = (data: Data) => void;
+export type WatcherCallback<Data extends SubscribeAction['payload'] = SubscribeAction['payload']> = (data: Data) => void;
 export type WatcherId = string;
 export type UserId = string;
-export type WatcherType = 'DEFAULT' | 'UNSUBSCRIBED' | string;
-export type SubscribeAction<Type = WatcherType, Payload = Record<string, unknown>> = { type: Type; payload: Payload };
+export type DefaultType = 'DEFAULT';
+export type WatcherType = DefaultType | string;
+export type SubscribeAction<Type extends WatcherType = WatcherType, Payload extends Record<string, unknown> = Record<string, unknown>> = {
+  type: Type;
+  payload: Payload;
+};
+export type CallbackForAction<Actions extends SubscribeAction, ActionType extends SubscribeAction['type']> = WatcherCallback<
+  Extract<Actions, { type: ActionType }>['payload']
+>;
 
-export type ConnectionRecord<Data> = {
+export type ConnectionRecord = {
   id: WatcherId;
-  callback: WatcherCallback<Data>;
+  callback: WatcherCallback;
+  onUnsubscribed?: () => void;
   userId: UserId | null;
   type: WatcherType;
 };
-export type WatchersDictionary<Data> = {
-  [watcherId: WatcherId]: ConnectionRecord<Data>;
+export type WatchersDictionary = {
+  [watcherId: WatcherId]: ConnectionRecord;
 };

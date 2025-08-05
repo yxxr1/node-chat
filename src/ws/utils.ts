@@ -1,23 +1,26 @@
 import { Request } from 'express';
+import { IncomingMessagesPayloads, IncomingMessageTypes, WSIncomingMessage } from '@ws/types';
 
-type MessageHandler = {
-  [type: string]: (payload: any) => void;
+type Callback<T = WSIncomingMessage['payload']> = (payload: T) => void;
+
+type MessageHandlers = {
+  [K in IncomingMessageTypes]: Callback<IncomingMessagesPayloads[K]>;
 };
 
-const isObject = (value: any) => value && typeof value === 'object';
+const isObject = (data: unknown): data is Record<string, unknown> => !!data && typeof data === 'object' && !Array.isArray(data);
+const isWSIncomingMessage = (data: unknown): data is WSIncomingMessage =>
+  isObject(data) && typeof data.type === 'string' && isObject(data.payload);
 
-export const getMessageHandler = (handlers: MessageHandler, req: Request) => (data: string) => {
+export const getMessageHandler = (handlers: MessageHandlers, req: Request) => (data: string) => {
   try {
-    const message: any = JSON.parse(data);
+    const message = JSON.parse(data);
 
-    if (isObject(message)) {
+    if (isWSIncomingMessage(message)) {
       const { type, payload } = message;
 
-      if (typeof type === 'string' && isObject(payload)) {
-        req.session.reload(() => {
-          handlers[type]?.(payload);
-        });
-      }
+      req.session.reload(() => {
+        (handlers[type] as Callback)?.(payload);
+      });
     }
   } catch (e: unknown) {
     console.error('ws error: ', (e as Error).message);

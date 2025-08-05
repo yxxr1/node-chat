@@ -1,9 +1,8 @@
-import { WSMessageHandler } from '@ws/types';
-import { manager, DEFAULT_TYPE } from '@core';
+import { manager, CHAT_SUBSCRIBE_TYPES } from '@core';
 import { Chat, Message } from '@interfaces/api-types';
 import { WatcherId } from '@interfaces/core';
-import { WSMessage } from '@ws/types';
 import { WSConnectionManager } from '@ws/manager';
+import { SubscribedChatMessage, WSMessageHandler } from '@ws/types';
 
 export type SubscribePayload = {
   chatId: Chat['id'];
@@ -24,14 +23,14 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
     const chat = manager.getChat(chatId);
 
     if (chat) {
-      let unreceivedMessages: Message[] | null = [];
+      let unreceivedMessages: Message[] | null = null;
 
       if (lastMessageId) {
         unreceivedMessages = await chat.getMessages(userId, lastMessageId);
       }
 
       if (unreceivedMessages !== null && unreceivedMessages.length) {
-        const message: WSMessage = {
+        const message: SubscribedChatMessage = {
           type: 'SUBSCRIBED_CHAT',
           payload: {
             messages: unreceivedMessages,
@@ -46,9 +45,10 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
         chat.unsubscribe(watcherId as WatcherId);
       };
 
-      const watcherId = await chat.subscribe(userId, ({ type, payload }) => {
-        if (type === DEFAULT_TYPE) {
-          const message: WSMessage = {
+      const watcherId = await chat.subscribeIfJoined(
+        userId,
+        (payload) => {
+          const message: SubscribedChatMessage = {
             type: 'SUBSCRIBED_CHAT',
             payload: {
               ...payload,
@@ -57,12 +57,14 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
           };
 
           ws.send(JSON.stringify(message));
-        } else {
+        },
+        CHAT_SUBSCRIBE_TYPES.DEFAULT,
+        () => {
           ws.removeEventListener('error', unsubscribeWatcher);
           ws.removeEventListener('close', unsubscribeWatcher);
           connectionManager.deleteSubscribed(chat.id);
-        }
-      });
+        },
+      );
 
       if (watcherId !== null) {
         ws.on('error', unsubscribeWatcher);

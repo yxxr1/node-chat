@@ -34,24 +34,25 @@ export const get: RequestHandler<Record<string, never>, GetOutput, void> = async
     res.json(data);
   };
 
-  const defaultWatcherId = await manager.subscribe(userId as string, ({ type, payload }) => {
-    closeQuery(type === MANAGER_SUBSCRIBE_TYPES.DEFAULT ? { ...payload, updatedChats: [] } : emptyResponse);
-  });
+  const defaultWatcherId = await manager.subscribe(
+    userId as string,
+    (payload) => {
+      closeQuery({ ...payload, updatedChats: [] });
+    },
+    MANAGER_SUBSCRIBE_TYPES.DEFAULT,
+    () => closeQuery(emptyResponse),
+  );
 
   const chatUpdatedWatcherId = await manager.subscribe(
     userId as string,
-    async ({ type, payload }) => {
-      if (type === MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED) {
-        const { chatId, onlyForJoined } = payload;
-        const chat = manager.getChat(chatId);
+    async ({ chatId, onlyForJoined }) => {
+      const chat = manager.getChat(chatId);
 
-        if (chat && (!onlyForJoined || (await chat.isJoined(userId as string)))) {
-          closeQuery({ updatedChats: [await chat.getChatEntity(userId as string, false)], newChats: [], deletedChatsIds: [] });
-        }
-      } else {
-        closeQuery(emptyResponse);
+      if (chat && (!onlyForJoined || (await chat.isJoined(userId as string)))) {
+        closeQuery({ updatedChats: [await chat.getChatEntity(userId as string, false)], newChats: [], deletedChatsIds: [] });
       }
     },
     MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED,
+    () => closeQuery(emptyResponse),
   );
 };
