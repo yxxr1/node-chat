@@ -23,8 +23,8 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
       throw new NotJoinedChat();
     }
 
-    if (!count) {
-      manager.deleteChat(chatId);
+    if (count === 0) {
+      await manager.deleteChat(chatId);
     }
 
     res.json({ chatId });

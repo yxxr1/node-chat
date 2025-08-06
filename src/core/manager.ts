@@ -1,5 +1,6 @@
 import { UserId, SubscribeAction } from '@interfaces/core';
-import { Chat as ChatType } from '@interfaces/api-types';
+import { Chat as ChatApiType } from '@interfaces/api-types';
+import { Chat as ChatDbType } from '@interfaces/db-types';
 import { Subscribable, DEFAULT_TYPE } from '@core/subscribable';
 import { Chat, CHAT_SUBSCRIBE_TYPES, ChatChatUpdatedSubscribeAction } from '@core/chat';
 import { MAIN_CHAT_NAME } from '@const/common';
@@ -13,7 +14,7 @@ type ManagerSubscribeTypes = typeof MANAGER_SUBSCRIBE_TYPES;
 
 export type ManagerDefaultSubscribeAction = SubscribeAction<
   ManagerSubscribeTypes['DEFAULT'],
-  { newChats: ChatType[]; deletedChatsIds: ChatType['id'][] }
+  { newChats: ChatApiType[]; deletedChatsIds: ChatApiType['id'][] }
 >;
 export type ManagerChatUpdatedSubscribeAction = SubscribeAction<
   ManagerSubscribeTypes['CHAT_UPDATED'],
@@ -25,27 +26,26 @@ class Manager extends Subscribable<ManagerSubscribeActions> {
   chats: Chat[] = [];
 
   async initChats() {
-    const chats = await chatsCollection.find().project({ id: 1, creatorId: 1, name: 1 });
+    const chats = await chatsCollection.find<Pick<ChatDbType, 'id'>>({}, { projection: { _id: 0, id: 1 } });
 
     if (await chats.hasNext()) {
-      chats.forEach(({ id, creatorId, name }) => {
-        const chat = new Chat(name, creatorId, id);
-        chat.init().then(() => {
-          this.addChat(chat);
-        });
-      });
+      let chat;
+      while ((chat = await chats.next())) {
+        await this.addChat(Chat.restoreChat(chat.id));
+      }
     } else {
-      const chat = new Chat(MAIN_CHAT_NAME);
-      await chat.init();
+      const chat = await Chat.createChat(MAIN_CHAT_NAME);
+
+      if (!chat) {
+        throw new Error('cannot create main chat');
+      }
+
       await this.addChat(chat);
     }
   }
 
   getChat(chatId: Chat['id']): Chat | undefined {
     return this.chats.find(({ id }) => id === chatId);
-  }
-  getChatByName(name: string): Chat | undefined {
-    return this.chats.find(({ name: existingName }) => existingName === name);
   }
   async getChatEntities(userId: UserId) {
     return Promise.all(this.chats.map((chat) => chat.getChatEntity(userId)));
@@ -70,17 +70,21 @@ class Manager extends Subscribable<ManagerSubscribeActions> {
     );
   }
 
-  deleteChat(chatId: Chat['id']): void {
-    this.chats = this.chats.filter((chat) => {
-      const match = chat.id === chatId && chat.name !== MAIN_CHAT_NAME;
+  async deleteChat(chatId: Chat['id']): Promise<void> {
+    const chat = await chatsCollection.findOne<Pick<ChatDbType, 'name'>>({ id: chatId }, { projection: { name: 1 } });
 
-      if (match) {
-        chat._closeChat();
-        this._broadcast({ deletedChatsIds: [chatId], newChats: [] }, MANAGER_SUBSCRIBE_TYPES.DEFAULT);
-      }
+    if (chat && chat.name !== MAIN_CHAT_NAME) {
+      this.chats = this.chats.filter((chat) => {
+        const match = chat.id === chatId;
 
-      return !match;
-    });
+        if (match) {
+          chat._closeChat();
+          this._broadcast({ deletedChatsIds: [chatId], newChats: [] }, MANAGER_SUBSCRIBE_TYPES.DEFAULT);
+        }
+
+        return !match;
+      });
+    }
   }
 
   async getUserJoinedChats(userId: UserId): Promise<Chat[]> {

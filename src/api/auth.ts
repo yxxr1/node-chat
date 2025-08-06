@@ -33,13 +33,16 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
     }
 
     manager.closeUserWatchers(req.session.userId);
-    (await manager.getUserJoinedChats(req.session.userId as string)).forEach(async (chat) => {
-      const count = await chat.quit(req.session.userId as string, req.session.name as string);
+    const userJoinedChats = await manager.getUserJoinedChats(req.session.userId as string);
+    await Promise.all(
+      userJoinedChats.map(async (chat) => {
+        const count = await chat.quit(req.session.userId as string, req.session.name as string);
 
-      if (count === 0) {
-        manager.deleteChat(chat.id);
-      }
-    });
+        if (count === 0) {
+          await manager.deleteChat(chat.id);
+        }
+      }),
+    );
 
     req.session.destroy(() => {
       res.json({ id: null, name: null });

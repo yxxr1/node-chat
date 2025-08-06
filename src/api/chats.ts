@@ -12,12 +12,12 @@ type PostOutput = ChatType;
 export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = async (req, res) => {
   const { name } = validateParams<PostInput>(req);
 
-  if (manager.getChatByName(name)) {
+  const chat = await Chat.createChat(name, req.session.userId);
+
+  if (chat === null) {
     throw new HttpError(403, 'Already exists');
   }
 
-  const chat = new Chat(name, req.session.userId);
-  await chat.init();
   await manager.addChat(chat);
 
   res.json(await chat.getChatEntity());

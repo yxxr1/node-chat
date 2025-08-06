@@ -24,31 +24,34 @@ export type ChatSubscribeActions = ChatDefaultSubscribeAction | ChatChatUpdatedS
 
 export class Chat extends Subscribable<ChatSubscribeActions> {
   id: string;
-  creatorId?: UserId;
-  name: string;
 
-  constructor(name: string, creatorId?: UserId, id?: string) {
+  constructor(id?: string) {
     super();
 
     this.id = id ?? nanoid();
-    this.creatorId = creatorId;
-    this.name = name;
   }
 
-  async init() {
-    const chat = await chatsCollection.findOne({ id: this.id });
+  static async createChat(name: string, creatorId?: UserId): Promise<Chat | null> {
+    const chatWithName = await chatsCollection.findOne<Pick<ChatType, 'id'>>({ name }, { projection: { id: 1 } });
 
-    if (!chat) {
-      const chat = {
-        id: this.id,
-        creatorId: this.creatorId,
-        name: this.name,
+    if (chatWithName === null) {
+      const newChat = new Chat();
+
+      await chatsCollection.insertOne({
+        id: newChat.id,
+        creatorId: creatorId,
+        name: name,
         joinedUsers: [],
         messages: [],
-      };
+      });
 
-      return chatsCollection.insertOne(chat);
+      return newChat;
     }
+
+    return null;
+  }
+  static restoreChat(id: string) {
+    return new Chat(id);
   }
 
   async subscribeIfJoined<SubscribeType extends ChatSubscribeActions['type'] = typeof CHAT_SUBSCRIBE_TYPES.DEFAULT>(
