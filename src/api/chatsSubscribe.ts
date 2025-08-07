@@ -39,7 +39,7 @@ export const get: RequestHandler<Record<string, never>, GetOutput, void> = async
     ({ payload }) => {
       closeQuery({ ...payload, updatedChats: [] });
     },
-    MANAGER_SUBSCRIBE_TYPES.DEFAULT,
+    MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED,
     () => closeQuery(emptyResponse),
   );
 

@@ -1,26 +1,27 @@
 import { nanoid } from 'nanoid';
 import { Collection, Filter, FindOptions } from 'mongodb';
-import { UserId, WatcherId, SubscribeAction, CallbackForAction, WildcardType } from '@interfaces/core';
+import { UserId, WatcherId, SubscribeAction, CallbackForAction, WildcardSubscribeType } from '@interfaces/core';
 import { Chat as ChatApiType } from '@interfaces/api-types';
 import { Message as MessageType, Chat as ChatType } from '@interfaces/db-types';
 import { MESSAGES_PAGE_SIZE } from '@const/limits';
-import { Subscribable, DEFAULT_TYPE } from '@core/subscribable';
+import { Subscribable } from '@core/subscribable';
 import { Message, SERVICE_TYPES } from '@core/message';
 import { ParametersExceptFirst } from '@utils/types';
 import { chatsCollection } from './db';
 
 export const CHAT_SUBSCRIBE_TYPES = {
-  DEFAULT: DEFAULT_TYPE,
+  NEW_MESSAGES: 'NEW_MESSAGES',
   CHAT_UPDATED: 'CHAT_UPDATED',
 } as const;
 type ChatSubscribeTypes = typeof CHAT_SUBSCRIBE_TYPES;
 
-export type ChatDefaultSubscribeAction = SubscribeAction<ChatSubscribeTypes['DEFAULT'], { messages: MessageType[] }>;
+type CommonPayload = { chatId: ChatType['id'] };
+export type ChatDefaultSubscribeAction = SubscribeAction<ChatSubscribeTypes['NEW_MESSAGES'], CommonPayload & { messages: MessageType[] }>;
 export type ChatChatUpdatedSubscribeAction = SubscribeAction<
   ChatSubscribeTypes['CHAT_UPDATED'],
-  { chatId: ChatType['id']; onlyForJoined: boolean }
+  CommonPayload & { onlyForJoined: boolean }
 >;
-export type ChatSubscribeActions = ChatDefaultSubscribeAction | ChatChatUpdatedSubscribeAction;
+type ChatSubscribeActions = ChatDefaultSubscribeAction | ChatChatUpdatedSubscribeAction;
 
 export class Chat extends Subscribable<ChatSubscribeActions> {
   id: string;
@@ -58,10 +59,10 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
     return new Chat(id);
   }
 
-  async subscribeIfJoined<SubscribeType extends ChatSubscribeActions['type'] | WildcardType = typeof CHAT_SUBSCRIBE_TYPES.DEFAULT>(
+  async subscribeIfJoined<SubscribeType extends ChatSubscribeActions['type'] | WildcardSubscribeType>(
     userId: UserId,
     callback: CallbackForAction<ChatSubscribeActions, SubscribeType>,
-    type?: SubscribeType,
+    type: SubscribeType,
     onUnsubscribed?: () => void,
   ): Promise<WatcherId | null> {
     if (await this.isJoined(userId)) {
@@ -155,7 +156,7 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
     message.setIndex(index);
     await this.updateChat({ $push: { messages: message } });
 
-    this._broadcast({ messages: [message] }, CHAT_SUBSCRIBE_TYPES.DEFAULT);
+    this._broadcast({ chatId: this.id, messages: [message] }, CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES);
 
     return message;
   }

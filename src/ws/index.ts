@@ -59,7 +59,7 @@ const wsHandler: WebsocketRequestHandler = async (ws, req) => {
 
       ws.send(JSON.stringify(message));
     },
-    MANAGER_SUBSCRIBE_TYPES.DEFAULT,
+    MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED,
     () => {
       ws.removeEventListener('error', defaultUnsubscribeWatcher);
       ws.removeEventListener('close', defaultUnsubscribeWatcher);

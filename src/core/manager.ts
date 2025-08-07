@@ -1,26 +1,26 @@
 import { UserId, SubscribeAction } from '@interfaces/core';
 import { Chat as ChatApiType } from '@interfaces/api-types';
 import { Chat as ChatDbType } from '@interfaces/db-types';
-import { Subscribable, DEFAULT_TYPE } from '@core/subscribable';
+import { Subscribable } from '@core/subscribable';
 import { Chat, CHAT_SUBSCRIBE_TYPES, ChatChatUpdatedSubscribeAction } from '@core/chat';
 import { MAIN_CHAT_NAME } from '@const/common';
 import { chatsCollection } from './db';
 
 export const MANAGER_SUBSCRIBE_TYPES = {
-  DEFAULT: DEFAULT_TYPE,
+  CHAT_LIST_UPDATED: 'CHAT_LIST_UPDATED',
   CHAT_UPDATED: 'CHAT_UPDATED',
 } as const;
 type ManagerSubscribeTypes = typeof MANAGER_SUBSCRIBE_TYPES;
 
 export type ManagerDefaultSubscribeAction = SubscribeAction<
-  ManagerSubscribeTypes['DEFAULT'],
+  ManagerSubscribeTypes['CHAT_LIST_UPDATED'],
   { newChats: ChatApiType[]; deletedChatsIds: ChatApiType['id'][] }
 >;
 export type ManagerChatUpdatedSubscribeAction = SubscribeAction<
   ManagerSubscribeTypes['CHAT_UPDATED'],
   ChatChatUpdatedSubscribeAction['payload']
 >;
-export type ManagerSubscribeActions = ManagerDefaultSubscribeAction | ManagerChatUpdatedSubscribeAction;
+type ManagerSubscribeActions = ManagerDefaultSubscribeAction | ManagerChatUpdatedSubscribeAction;
 
 class Manager extends Subscribable<ManagerSubscribeActions> {
   chats: Chat[] = [];
@@ -66,7 +66,7 @@ class Manager extends Subscribable<ManagerSubscribeActions> {
         newChats: [await chat.getChatEntity(null, false)],
         deletedChatsIds: [],
       },
-      MANAGER_SUBSCRIBE_TYPES.DEFAULT,
+      MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED,
     );
   }
 
@@ -78,7 +78,7 @@ class Manager extends Subscribable<ManagerSubscribeActions> {
 
       if (chat) {
         await chat._closeChat();
-        this._broadcast({ deletedChatsIds: [chatId], newChats: [] }, MANAGER_SUBSCRIBE_TYPES.DEFAULT);
+        this._broadcast({ deletedChatsIds: [chatId], newChats: [] }, MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED);
         this.chats = this.chats.filter((item) => item !== chat);
       }
     }

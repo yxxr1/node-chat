@@ -4,27 +4,26 @@ import {
   WatcherId,
   WatchersDictionary,
   SubscribeAction,
-  DefaultType,
   CallbackForAction,
+  PayloadForAction,
   WatcherCallback,
   WildcardSubscribeType,
 } from '@interfaces/core';
 
-export const DEFAULT_TYPE: DefaultType = 'DEFAULT';
 const WILDCARD_TYPE: WildcardSubscribeType = '*';
 
 export class Subscribable<Actions extends SubscribeAction> {
   _watchers: WatchersDictionary = {};
 
-  async subscribe<SubscribeType extends Actions['type'] | WildcardSubscribeType = DefaultType>(
+  async subscribe<SubscribeType extends Actions['type'] | WildcardSubscribeType>(
     userId: UserId | null,
     callback: CallbackForAction<Actions, SubscribeType>,
-    type?: SubscribeType,
+    type: SubscribeType,
     onUnsubscribed?: () => void,
   ): Promise<WatcherId> {
     const id = nanoid();
 
-    this._watchers[id] = { id, userId, callback: callback as WatcherCallback, type: type ?? DEFAULT_TYPE, onUnsubscribed };
+    this._watchers[id] = { id, userId, callback: callback as WatcherCallback, type, onUnsubscribed };
 
     return id;
   }
@@ -53,10 +52,7 @@ export class Subscribable<Actions extends SubscribeAction> {
     }
   }
 
-  _broadcast<BroadcastType extends Actions['type'] = DefaultType>(
-    payload: Extract<Actions, { type: BroadcastType }>['payload'],
-    type: BroadcastType,
-  ): void {
+  _broadcast<BroadcastType extends Actions['type']>(payload: PayloadForAction<Actions, BroadcastType>, type: BroadcastType): void {
     for (const id in this._watchers) {
       const { type: watcherType } = this._watchers[id];
 

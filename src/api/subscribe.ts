@@ -40,7 +40,7 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
           res.json(payload);
           chat.unsubscribe(watcherId as string);
         },
-        CHAT_SUBSCRIBE_TYPES.DEFAULT,
+        CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES,
         () => {
           clearTimeout(timerId);
           res.json({ messages: [] });

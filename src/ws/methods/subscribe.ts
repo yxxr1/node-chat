@@ -58,7 +58,7 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
 
           ws.send(JSON.stringify(message));
         },
-        CHAT_SUBSCRIBE_TYPES.DEFAULT,
+        CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES,
         () => {
           ws.removeEventListener('error', unsubscribeWatcher);
           ws.removeEventListener('close', unsubscribeWatcher);
