@@ -55,7 +55,7 @@ class Manager extends Subscribable<ManagerSubscribeActions> {
     this.chats.push(chat);
     await chat.subscribe(
       null,
-      (payload) => {
+      ({ payload }) => {
         this._broadcast(payload, MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED);
       },
       CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED,

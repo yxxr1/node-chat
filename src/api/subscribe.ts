@@ -35,7 +35,7 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
 
       const watcherId = await chat.subscribeIfJoined(
         req.session.userId as string,
-        (payload) => {
+        ({ payload }) => {
           clearTimeout(timerId);
           res.json(payload);
           chat.unsubscribe(watcherId as string);

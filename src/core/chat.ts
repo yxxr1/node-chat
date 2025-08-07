@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid';
 import { Collection, Filter, FindOptions } from 'mongodb';
-import { UserId, WatcherId, SubscribeAction, CallbackForAction } from '@interfaces/core';
+import { UserId, WatcherId, SubscribeAction, CallbackForAction, WildcardType } from '@interfaces/core';
 import { Chat as ChatApiType } from '@interfaces/api-types';
 import { Message as MessageType, Chat as ChatType } from '@interfaces/db-types';
 import { MESSAGES_PAGE_SIZE } from '@const/limits';
@@ -58,7 +58,7 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
     return new Chat(id);
   }
 
-  async subscribeIfJoined<SubscribeType extends ChatSubscribeActions['type'] = typeof CHAT_SUBSCRIBE_TYPES.DEFAULT>(
+  async subscribeIfJoined<SubscribeType extends ChatSubscribeActions['type'] | WildcardType = typeof CHAT_SUBSCRIBE_TYPES.DEFAULT>(
     userId: UserId,
     callback: CallbackForAction<ChatSubscribeActions, SubscribeType>,
     type?: SubscribeType,

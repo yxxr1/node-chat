@@ -1,12 +1,22 @@
 import { nanoid } from 'nanoid';
-import { UserId, WatcherId, WatchersDictionary, SubscribeAction, DefaultType, CallbackForAction, WatcherCallback } from '@interfaces/core';
+import {
+  UserId,
+  WatcherId,
+  WatchersDictionary,
+  SubscribeAction,
+  DefaultType,
+  CallbackForAction,
+  WatcherCallback,
+  WildcardSubscribeType,
+} from '@interfaces/core';
 
 export const DEFAULT_TYPE: DefaultType = 'DEFAULT';
+const WILDCARD_TYPE: WildcardSubscribeType = '*';
 
 export class Subscribable<Actions extends SubscribeAction> {
   _watchers: WatchersDictionary = {};
 
-  async subscribe<SubscribeType extends Actions['type'] = DefaultType>(
+  async subscribe<SubscribeType extends Actions['type'] | WildcardSubscribeType = DefaultType>(
     userId: UserId | null,
     callback: CallbackForAction<Actions, SubscribeType>,
     type?: SubscribeType,
@@ -45,13 +55,13 @@ export class Subscribable<Actions extends SubscribeAction> {
 
   _broadcast<BroadcastType extends Actions['type'] = DefaultType>(
     payload: Extract<Actions, { type: BroadcastType }>['payload'],
-    type?: BroadcastType,
+    type: BroadcastType,
   ): void {
     for (const id in this._watchers) {
       const { type: watcherType } = this._watchers[id];
 
-      if (watcherType === type) {
-        this._watchers[id]?.callback(payload);
+      if (watcherType === type || watcherType === WILDCARD_TYPE) {
+        this._watchers[id]?.callback({ type, payload });
       }
     }
   }

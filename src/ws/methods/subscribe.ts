@@ -47,7 +47,7 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
 
       const watcherId = await chat.subscribeIfJoined(
         userId,
-        (payload) => {
+        ({ payload }) => {
           const message: SubscribedChatMessage = {
             type: 'SUBSCRIBED_CHAT',
             payload: {

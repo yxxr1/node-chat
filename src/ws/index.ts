@@ -51,7 +51,7 @@ const wsHandler: WebsocketRequestHandler = async (ws, req) => {
 
   const managerDefaultWatcherId = await manager.subscribe(
     userId as string,
-    (payload) => {
+    ({ payload }) => {
       const message: WatchChatsMessage = {
         type: 'WATCH_CHATS',
         payload: { ...payload, updatedChats: [] },
@@ -68,7 +68,9 @@ const wsHandler: WebsocketRequestHandler = async (ws, req) => {
 
   const managerChatUpdatedWatcherId = await manager.subscribe(
     userId as string,
-    async ({ chatId, onlyForJoined }) => {
+    async ({ payload }) => {
+      const { chatId, onlyForJoined } = payload;
+
       const chat = manager.getChat(chatId);
 
       if (chat && (!onlyForJoined || (await chat.isJoined(userId as string)))) {
