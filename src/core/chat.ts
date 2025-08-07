@@ -37,13 +37,17 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
     if (chatWithName === null) {
       const newChat = new Chat();
 
-      await chatsCollection.insertOne({
+      const result = await chatsCollection.insertOne({
         id: newChat.id,
         creatorId: creatorId,
         name: name,
         joinedUsers: [],
         messages: [],
       });
+
+      if (!result.insertedId) {
+        throw new Error('cannot create chat');
+      }
 
       return newChat;
     }
@@ -70,8 +74,8 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
   async updateChat(...args: ParametersExceptFirst<Collection<ChatType>['updateOne']>): ReturnType<Collection<ChatType>['updateOne']> {
     const result = await chatsCollection.updateOne({ id: this.id }, ...args);
 
-    if (result.matchedCount === 0) {
-      throw new Error('Cannot modify chat');
+    if (result.matchedCount !== 1) {
+      throw new Error('cannot modify chat');
     }
 
     return result;
@@ -107,9 +111,9 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
 
   async quit(userId: UserId, userName: string | null): Promise<number | null> {
     if (await this.isJoined(userId)) {
-      this.closeUserWatchers(userId);
-
       await this.updateChat({ $pull: { joinedUsers: userId } });
+
+      this.closeUserWatchers(userId);
 
       this._broadcast({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
       await this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_LEFT);
@@ -182,8 +186,8 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
     return (await this.findChat({}, { messages: { $slice: -pageSize } }))?.messages || [];
   }
 
-  _closeChat(): void {
+  async _closeChat(): Promise<void> {
+    await chatsCollection.deleteOne({ id: this.id });
     this._closeAllWatchers();
-    chatsCollection.deleteOne({ id: this.id });
   }
 }

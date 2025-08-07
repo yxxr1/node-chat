@@ -8,6 +8,7 @@ import { COMMON_CONFIG } from '@config/common';
 import { corsMiddleware, errorMiddleware, checkQuery } from '@middleware';
 import { initApi } from '@api';
 import { initWs } from '@ws';
+import { manager } from '@core';
 import '@interfaces/session';
 
 const MongoDBStore = mongoSession(session);
@@ -40,6 +41,8 @@ initApi(app);
 initWs(wsApp);
 app.use(errorMiddleware);
 
-app.listen(COMMON_CONFIG.PORT, () => {
-  console.log('Server started');
+manager.initChats().then(() => {
+  app.listen(COMMON_CONFIG.PORT, () => {
+    console.log('Server started');
+  });
 });

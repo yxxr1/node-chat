@@ -71,19 +71,16 @@ class Manager extends Subscribable<ManagerSubscribeActions> {
   }
 
   async deleteChat(chatId: Chat['id']): Promise<void> {
-    const chat = await chatsCollection.findOne<Pick<ChatDbType, 'name'>>({ id: chatId }, { projection: { name: 1 } });
+    const dbChat = await chatsCollection.findOne<Pick<ChatDbType, 'name'>>({ id: chatId }, { projection: { name: 1 } });
 
-    if (chat && chat.name !== MAIN_CHAT_NAME) {
-      this.chats = this.chats.filter((chat) => {
-        const match = chat.id === chatId;
+    if (dbChat && dbChat.name !== MAIN_CHAT_NAME) {
+      const chat = this.chats.find(({ id }) => id === chatId);
 
-        if (match) {
-          chat._closeChat();
-          this._broadcast({ deletedChatsIds: [chatId], newChats: [] }, MANAGER_SUBSCRIBE_TYPES.DEFAULT);
-        }
-
-        return !match;
-      });
+      if (chat) {
+        await chat._closeChat();
+        this._broadcast({ deletedChatsIds: [chatId], newChats: [] }, MANAGER_SUBSCRIBE_TYPES.DEFAULT);
+        this.chats = this.chats.filter((item) => item !== chat);
+      }
     }
   }
 
@@ -95,4 +92,3 @@ class Manager extends Subscribable<ManagerSubscribeActions> {
 }
 
 export const manager = new Manager();
-manager.initChats();
