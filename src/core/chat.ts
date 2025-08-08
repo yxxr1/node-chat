@@ -16,12 +16,15 @@ export const CHAT_SUBSCRIBE_TYPES = {
 type ChatSubscribeTypes = typeof CHAT_SUBSCRIBE_TYPES;
 
 type CommonPayload = { chatId: ChatType['id'] };
-export type ChatDefaultSubscribeAction = SubscribeAction<ChatSubscribeTypes['NEW_MESSAGES'], CommonPayload & { messages: MessageType[] }>;
+export type ChatNewMessagesSubscribeAction = SubscribeAction<
+  ChatSubscribeTypes['NEW_MESSAGES'],
+  CommonPayload & { messages: MessageType[] }
+>;
 export type ChatChatUpdatedSubscribeAction = SubscribeAction<
   ChatSubscribeTypes['CHAT_UPDATED'],
   CommonPayload & { onlyForJoined: boolean }
 >;
-type ChatSubscribeActions = ChatDefaultSubscribeAction | ChatChatUpdatedSubscribeAction;
+export type ChatSubscribeActions = ChatNewMessagesSubscribeAction | ChatChatUpdatedSubscribeAction;
 
 export class Chat extends Subscribable<ChatSubscribeActions> {
   id: string;

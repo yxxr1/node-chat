@@ -15,12 +15,12 @@ const WILDCARD_TYPE: WildcardSubscribeType = '*';
 export class Subscribable<Actions extends SubscribeAction> {
   _watchers: WatchersDictionary = {};
 
-  async subscribe<SubscribeType extends Actions['type'] | WildcardSubscribeType>(
+  subscribe<SubscribeType extends Actions['type'] | WildcardSubscribeType>(
     userId: UserId | null,
     callback: CallbackForAction<Actions, SubscribeType>,
     type: SubscribeType,
     onUnsubscribed?: () => void,
-  ): Promise<WatcherId> {
+  ): WatcherId {
     const id = nanoid();
 
     this._watchers[id] = { id, userId, callback: callback as WatcherCallback, type, onUnsubscribed };

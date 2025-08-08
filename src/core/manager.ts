@@ -12,7 +12,7 @@ export const MANAGER_SUBSCRIBE_TYPES = {
 } as const;
 type ManagerSubscribeTypes = typeof MANAGER_SUBSCRIBE_TYPES;
 
-export type ManagerDefaultSubscribeAction = SubscribeAction<
+export type ManagerChatListUpdatedSubscribeAction = SubscribeAction<
   ManagerSubscribeTypes['CHAT_LIST_UPDATED'],
   { newChats: ChatApiType[]; deletedChatsIds: ChatApiType['id'][] }
 >;
@@ -20,7 +20,7 @@ export type ManagerChatUpdatedSubscribeAction = SubscribeAction<
   ManagerSubscribeTypes['CHAT_UPDATED'],
   ChatChatUpdatedSubscribeAction['payload']
 >;
-type ManagerSubscribeActions = ManagerDefaultSubscribeAction | ManagerChatUpdatedSubscribeAction;
+export type ManagerSubscribeActions = ManagerChatListUpdatedSubscribeAction | ManagerChatUpdatedSubscribeAction;
 
 class Manager extends Subscribable<ManagerSubscribeActions> {
   chats: Chat[] = [];
@@ -53,7 +53,7 @@ class Manager extends Subscribable<ManagerSubscribeActions> {
 
   async addChat(chat: Chat): Promise<void> {
     this.chats.push(chat);
-    await chat.subscribe(
+    chat.subscribe(
       null,
       ({ payload }) => {
         this._broadcast(payload, MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED);

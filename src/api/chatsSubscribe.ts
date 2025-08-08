@@ -34,7 +34,7 @@ export const get: RequestHandler<Record<string, never>, GetOutput, void> = async
     res.json(data);
   };
 
-  const defaultWatcherId = await manager.subscribe(
+  const defaultWatcherId = manager.subscribe(
     userId as string,
     ({ payload }) => {
       closeQuery({ ...payload, updatedChats: [] });
@@ -43,7 +43,7 @@ export const get: RequestHandler<Record<string, never>, GetOutput, void> = async
     () => closeQuery(emptyResponse),
   );
 
-  const chatUpdatedWatcherId = await manager.subscribe(
+  const chatUpdatedWatcherId = manager.subscribe(
     userId as string,
     async ({ payload }) => {
       const { chatId, onlyForJoined } = payload;
