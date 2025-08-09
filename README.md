@@ -13,4 +13,7 @@ Deps:
 - `REDIS_URL`: redis url, default not specified, can be `redis://127.0.0.1/` for local redis instance
 - `REDIS_CHANNEL_NAME`: redis pub/sub channel name, default `chat-broadcast-sync`
 
-Start command: `npm i && npm run start`
+Start app:
+- `npm i` to install deps
+- `npm run start` to start app dev
+- `npm run build && node ./dist/index.js` to start app prod
