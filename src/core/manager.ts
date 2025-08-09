@@ -51,7 +51,7 @@ class Manager extends Subscribable<ManagerSubscribeActions> {
     return Promise.all(this.chats.map((chat) => chat.getChatEntity(userId)));
   }
 
-  async addChat(chat: Chat): Promise<void> {
+  async addChat(chat: Chat, broadcastExtra?: Record<string, unknown>): Promise<void> {
     this.chats.push(chat);
     chat.subscribe(
       null,
@@ -67,18 +67,19 @@ class Manager extends Subscribable<ManagerSubscribeActions> {
         deletedChatsIds: [],
       },
       MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED,
+      broadcastExtra,
     );
   }
 
-  async deleteChat(chatId: Chat['id']): Promise<void> {
+  async deleteChat(chatId: Chat['id'], broadcastExtra?: Record<string, unknown>): Promise<void> {
     const dbChat = await chatsCollection.findOne<Pick<ChatDbType, 'name'>>({ id: chatId }, { projection: { name: 1 } });
 
-    if (dbChat && dbChat.name !== MAIN_CHAT_NAME) {
+    if (!dbChat || (dbChat && dbChat.name !== MAIN_CHAT_NAME)) {
       const chat = this.chats.find(({ id }) => id === chatId);
 
       if (chat) {
         await chat._closeChat();
-        this._broadcast({ deletedChatsIds: [chatId], newChats: [] }, MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED);
+        this._broadcast({ deletedChatsIds: [chatId], newChats: [] }, MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED, broadcastExtra);
         this.chats = this.chats.filter((item) => item !== chat);
       }
     }

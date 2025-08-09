@@ -5,6 +5,7 @@ export type WildcardSubscribeType = '*';
 export type SubscribeAction<Type extends string = string, Payload extends Record<string, unknown> = Record<string, unknown>> = {
   type: Type;
   payload: Payload;
+  extra?: Record<string, unknown>;
 };
 export type CallbackForAction<
   Actions extends SubscribeAction,

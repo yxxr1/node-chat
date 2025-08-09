@@ -52,12 +52,16 @@ export class Subscribable<Actions extends SubscribeAction> {
     }
   }
 
-  _broadcast<BroadcastType extends Actions['type']>(payload: PayloadForAction<Actions, BroadcastType>, type: BroadcastType): void {
+  _broadcast<BroadcastType extends Actions['type']>(
+    payload: PayloadForAction<Actions, BroadcastType>,
+    type: BroadcastType,
+    extra?: Record<string, unknown>,
+  ): void {
     for (const id in this._watchers) {
       const { type: watcherType } = this._watchers[id];
 
       if (watcherType === type || watcherType === WILDCARD_TYPE) {
-        this._watchers[id]?.callback({ type, payload });
+        this._watchers[id]?.callback({ type, payload, extra });
       }
     }
   }
