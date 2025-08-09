@@ -51,7 +51,7 @@ export class SyncManager {
       try {
         parsedData = JSON.parse(data);
         assertIsSyncData(parsedData);
-      } catch (e: unknown) {
+      } catch {
         console.error('Incorrect sync data');
       }
 
