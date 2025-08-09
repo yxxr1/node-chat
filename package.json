@@ -31,7 +31,8 @@
     "express-ws": "^5.0.2",
     "moment": "^2.29.4",
     "mongodb": "^6.5.0",
-    "nanoid": "^3.3.7"
+    "nanoid": "^3.3.7",
+    "redis": "^5.8.0"
   },
   "devDependencies": {
     "@types/connect-mongodb-session": "^2.4.7",

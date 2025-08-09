@@ -1,5 +1,6 @@
 import { Request } from 'express';
 import { IncomingMessagesPayloads, IncomingMessageTypes, WSIncomingMessage } from '@ws/types';
+import { isObject } from '@utils/common';
 
 type Callback<T = WSIncomingMessage['payload']> = (payload: T) => void;
 
@@ -7,7 +8,6 @@ type MessageHandlers = {
   [K in IncomingMessageTypes]: Callback<IncomingMessagesPayloads[K]>;
 };
 
-const isObject = (data: unknown): data is Record<string, unknown> => !!data && typeof data === 'object' && !Array.isArray(data);
 const isWSIncomingMessage = (data: unknown): data is WSIncomingMessage =>
   isObject(data) && typeof data.type === 'string' && isObject(data.payload);
 

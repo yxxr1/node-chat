@@ -9,6 +9,7 @@ import { corsMiddleware, errorMiddleware, checkQuery } from '@middleware';
 import { initApi } from '@api';
 import { initWs } from '@ws';
 import { manager } from '@core';
+import { SyncManager } from '@core/sync';
 import '@interfaces/session';
 
 const MongoDBStore = mongoSession(session);
@@ -41,8 +42,16 @@ initApi(app);
 initWs(wsApp);
 app.use(errorMiddleware);
 
-manager.initChats().then(() => {
-  app.listen(COMMON_CONFIG.PORT, () => {
-    console.log('Server started');
+manager
+  .initChats()
+  .then(() => {
+    if (COMMON_CONFIG.REDIS_URL) {
+      const syncManager = new SyncManager(COMMON_CONFIG.REDIS_URL, COMMON_CONFIG.REDIS_CHANNEL_NAME);
+      return syncManager.initSync();
+    }
+  })
+  .then(() => {
+    app.listen(COMMON_CONFIG.PORT, () => {
+      console.log('Server started');
+    });
   });
-});
