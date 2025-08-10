@@ -92,7 +92,7 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
     return chatsCollection.findOne<Extra & ChatType>({ ...filter, id: this.id }, { projection });
   }
 
-  async join(userId: UserId, userName: string | null): Promise<boolean> {
+  async join(userId: UserId, userName: string): Promise<boolean> {
     if (!(await this.isJoined(userId))) {
       await this.updateChat({ $push: { joinedUsers: userId } });
 
@@ -105,7 +105,7 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
     return false;
   }
 
-  async publish(text: string, fromId: UserId, fromName: string | null): Promise<MessageType | null> {
+  async publish(text: string, fromId: UserId, fromName: string): Promise<MessageType | null> {
     if (await this.isJoined(fromId)) {
       return this._addMessage(text, fromId, fromName);
     }
@@ -113,7 +113,7 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
     return null;
   }
 
-  async quit(userId: UserId, userName: string | null): Promise<number | null> {
+  async quit(userId: UserId, userName: string): Promise<number | null> {
     if (await this.isJoined(userId)) {
       await this.updateChat({ $pull: { joinedUsers: userId } });
 

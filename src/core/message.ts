@@ -15,7 +15,7 @@ export class Message {
   service?: number;
   index: number;
 
-  constructor(text: string | null, fromId: string, fromName: string | null, service?: number) {
+  constructor(text: string | null, fromId: string, fromName: string, service?: number) {
     this.id = nanoid();
     this.text = text;
     this.fromId = fromId;
