@@ -1,4 +1,4 @@
-import { validationResult, matchedData, body, ValidationChain } from 'express-validator';
+import { validationResult, matchedData, body, query, header, ValidationChain } from 'express-validator';
 import { Request } from 'express';
 import { urlAlphabet } from 'nanoid';
 import { HttpError } from '@utils/errors';
@@ -25,21 +25,29 @@ export const getNameChain = (fieldName: string, allowNull = false): ValidationCh
     .isString()
     .matches(nameRegexp);
 
-export const getIdChain = (fieldName: string): ValidationChain =>
-  body(fieldName).isString().isLength({ min: 21, max: 21 }).isWhitelisted(urlAlphabet);
+export const getIdChain = (fieldName: string, type: 'body' | 'query' | 'header' = 'body'): ValidationChain =>
+  ({ body, query, header })[type](fieldName).isString().isLength({ min: 21, max: 21 }).isWhitelisted(urlAlphabet);
 
-export const getSettingsChains = () => [
-  body('settings.connectionMethod')
-    .matches(`^(${CONNECTION_METHODS.HTTP}|${CONNECTION_METHODS.WS})$`)
-    .withMessage(`Available connections methods are '${CONNECTION_METHODS.HTTP}', '${CONNECTION_METHODS.WS}'`)
-    .optional(),
-  body('settings.theme')
-    .matches(`^(${UI_THEMES.LIGHT}|${UI_THEMES.DARK})$`)
-    .withMessage(`Available themes are '${UI_THEMES.LIGHT}', '${UI_THEMES.DARK}'`)
-    .optional(),
-  body('settings.isNotificationsEnabled').isBoolean().optional(),
-  body('settings.isShowNotificationMessageText').isBoolean().optional(),
-];
+export const getSettingsChains = () => {
+  const getMatch = (options: Record<string, string>) => Object.values(options).join('|');
+  const getMessage = (options: Record<string, string>) =>
+    Object.values(options)
+      .map((value) => `'${value}'`)
+      .join(', ');
+
+  return [
+    body('settings.connectionMethod')
+      .matches(`^(${getMatch(CONNECTION_METHODS)})$`)
+      .withMessage(`Available connections methods are ${getMessage(CONNECTION_METHODS)}`)
+      .optional(),
+    body('settings.theme')
+      .matches(`^(${getMatch(UI_THEMES)})$`)
+      .withMessage(`Available themes are ${getMessage(UI_THEMES)}`)
+      .optional(),
+    body('settings.isNotificationsEnabled').isBoolean().optional(),
+    body('settings.isShowNotificationMessageText').isBoolean().optional(),
+  ];
+};
 
 const isWhitelisted = (value: string, alphabet: string): boolean => !value.split('').find((char) => !alphabet.includes(char));
 

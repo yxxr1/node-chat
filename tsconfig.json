@@ -26,6 +26,8 @@
       "@interfaces/*": ["src/interfaces/*"],
       "@ws": ["src/ws/index.ts"],
       "@ws/*": ["src/ws/*"],
+      "@sse": ["src/sse/index.ts"],
+      "@sse/*": ["src/sse/*"],
       "@const/*": ["src/const/*"]
     }
   },

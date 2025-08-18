@@ -1,7 +1,7 @@
 import * as WebSocket from 'ws';
 import { SessionData } from 'express-session';
-import { Chat, Message } from '@interfaces/api-types';
 import { PublishPayload, SubscribePayload } from '@ws/methods';
+import { SubscribedChat, WatchChats } from '@interfaces/subscribe-data';
 
 export type IncomingMessagesPayloads = {
   PUBLISH_MESSAGE: PublishPayload;
@@ -15,18 +15,11 @@ export type WSIncomingMessage = {
 
 export type SubscribedChatMessage = {
   type: 'SUBSCRIBED_CHAT';
-  payload: {
-    chatId: Chat['id'];
-    messages: Message[];
-  };
+  payload: SubscribedChat;
 };
 export type WatchChatsMessage = {
   type: 'WATCH_CHATS';
-  payload: {
-    newChats: Chat[];
-    deletedChatsIds: Chat['id'][];
-    updatedChats: Chat[];
-  };
+  payload: WatchChats;
 };
 
 export type WSMessageHandler<Payload, Context = void, Return = void> = (

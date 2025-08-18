@@ -17,24 +17,21 @@ const wsHandler: WebsocketRequestHandler = async (ws, req) => {
     'message',
     getMessageHandler(
       {
-        PUBLISH_MESSAGE: (payload) => {
-          if (isId(payload.chatId) && isValidMessage(payload.message)) {
+        PUBLISH_MESSAGE: ({ chatId, message }) => {
+          if (isId(chatId) && isValidMessage(message)) {
             publish(
               {
-                ...payload,
-                message: payload.message.trim(),
+                chatId,
+                message: message.trim(),
               },
               req.session as SessionData,
               ws,
             );
           }
         },
-        SUBSCRIBE_CHAT: (payload) => {
-          if (
-            isId(payload.chatId) &&
-            (isId(payload.lastMessageId) || payload.lastMessageId === undefined || payload.lastMessageId === null)
-          ) {
-            subscribe(payload, req.session as SessionData, ws, { connectionManager });
+        SUBSCRIBE_CHAT: ({ chatId, lastMessageId }) => {
+          if (isId(chatId) && (isId(lastMessageId) || lastMessageId === undefined || lastMessageId === null)) {
+            subscribe({ chatId, lastMessageId }, req.session as SessionData, ws, { connectionManager });
           }
         },
       },

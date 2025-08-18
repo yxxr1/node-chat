@@ -8,6 +8,7 @@ import { COMMON_CONFIG } from '@config/common';
 import { corsMiddleware, errorMiddleware, checkQuery } from '@middleware';
 import { initApi } from '@api';
 import { initWs } from '@ws';
+import { initSSE } from '@sse';
 import { manager } from '@core';
 import { SyncManager } from '@core/sync';
 import '@interfaces/session';
@@ -40,6 +41,7 @@ app.use(corsMiddleware);
 
 initApi(app);
 initWs(wsApp);
+initSSE(app);
 app.use(errorMiddleware);
 
 manager

@@ -23,7 +23,7 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
     const chat = manager.getChat(chatId);
 
     if (chat) {
-      let unreceivedMessages: Message[] | null = null;
+      let unreceivedMessages: Message[] | null = [];
 
       if (lastMessageId) {
         unreceivedMessages = await chat.getMessages(userId, lastMessageId);
@@ -50,10 +50,7 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
         ({ payload }) => {
           const message: SubscribedChatMessage = {
             type: 'SUBSCRIBED_CHAT',
-            payload: {
-              ...payload,
-              chatId: chat.id,
-            },
+            payload,
           };
 
           ws.send(JSON.stringify(message));

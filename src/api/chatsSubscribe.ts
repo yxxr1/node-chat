@@ -1,14 +1,10 @@
 import { RequestHandler } from 'express';
 import { manager, MANAGER_SUBSCRIBE_TYPES } from '@core';
-import { Chat as ChatType } from '@interfaces/api-types';
+import { WatchChats } from '@interfaces/subscribe-data';
 
 const SUBSCRIBE_TIMEOUT = 30000;
 
-type GetOutput = {
-  newChats: ChatType[];
-  deletedChatsIds: ChatType['id'][];
-  updatedChats: ChatType[];
-};
+type GetOutput = WatchChats;
 const emptyResponse = { newChats: [], deletedChatsIds: [], updatedChats: [] };
 
 export const get: RequestHandler<Record<string, never>, GetOutput, void> = async (req, res) => {

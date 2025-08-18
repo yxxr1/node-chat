@@ -3,6 +3,7 @@ import { manager, CHAT_SUBSCRIBE_TYPES } from '@core';
 import { ChatNotFound, NotJoinedChat } from '@utils/errors';
 import { validateParams } from '@utils/validation';
 import { Chat, Message } from '@interfaces/api-types';
+import { SubscribedChat } from '@interfaces/subscribe-data';
 
 const SUBSCRIBE_TIMEOUT = 10000;
 
@@ -10,9 +11,7 @@ type PostInput = {
   chatId: Chat['id'];
   lastMessageId?: Message['id'];
 };
-type PostOutput = {
-  messages: Message[];
-};
+type PostOutput = SubscribedChat;
 
 export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = async (req, res) => {
   const { chatId, lastMessageId } = validateParams<PostInput>(req);
@@ -29,7 +28,7 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
     if (unreceivedMessages === null) {
       throw new NotJoinedChat();
     } else if (unreceivedMessages.length) {
-      res.json({ messages: unreceivedMessages });
+      res.json({ chatId, messages: unreceivedMessages });
     } else {
       let timerId: NodeJS.Timeout;
 
@@ -43,14 +42,14 @@ export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> 
         CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES,
         () => {
           clearTimeout(timerId);
-          res.json({ messages: [] });
+          res.json({ chatId, messages: [] });
           chat.unsubscribe(watcherId as string);
         },
       );
 
       if (watcherId !== null) {
         timerId = setTimeout(() => {
-          res.json({ messages: [] });
+          res.json({ chatId, messages: [] });
           chat.unsubscribe(watcherId as string);
         }, SUBSCRIBE_TIMEOUT);
 
