@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
@@ -54,6 +55,6 @@ manager
   })
   .then(() => {
     app.listen(COMMON_CONFIG.PORT, () => {
-      console.log('Server started');
+      console.log(`Server started on port ${COMMON_CONFIG.PORT}`);
     });
   });
