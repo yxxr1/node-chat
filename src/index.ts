@@ -7,12 +7,12 @@ import mongoSession from 'connect-mongodb-session';
 import expressWs from 'express-ws';
 import { COMMON_CONFIG } from '@config/common';
 import { corsMiddleware, errorMiddleware, checkQuery } from '@middleware';
-import { initApi } from '@api';
-import { initWs } from '@ws';
-import { initSSE } from '@sse';
-import { manager } from '@core';
-import { SyncManager } from '@core/sync';
-import '@interfaces/session';
+import { initApi } from '@routes/api';
+import { initWs } from '@routes/ws';
+import { initSSE } from '@routes/sse';
+import { manager } from '@services/chat';
+import { SyncManager } from '@services/chatSync';
+import './types';
 
 const MongoDBStore = mongoSession(session);
 const store = new MongoDBStore(
@@ -49,7 +49,7 @@ manager
   .initChats()
   .then(() => {
     if (COMMON_CONFIG.REDIS_URL) {
-      const syncManager = new SyncManager(COMMON_CONFIG.REDIS_URL, COMMON_CONFIG.REDIS_CHANNEL_NAME);
+      const syncManager = new SyncManager(manager, COMMON_CONFIG.REDIS_URL, COMMON_CONFIG.REDIS_CHANNEL_NAME);
       return syncManager.initSync();
     }
   })

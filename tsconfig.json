@@ -18,17 +18,13 @@
       "@config/*": ["src/config/*"],
       "@middleware": ["src/middleware/index.ts"],
       "@middleware/*": ["src/middleware/*"],
-      "@api": ["src/api/index.ts"],
-      "@api/*": ["src/api/*"],
-      "@core": ["src/core/index.ts"],
-      "@core/*": ["src/core/*"],
       "@utils/*": ["src/utils/*"],
-      "@interfaces/*": ["src/interfaces/*"],
-      "@ws": ["src/ws/index.ts"],
-      "@ws/*": ["src/ws/*"],
-      "@sse": ["src/sse/index.ts"],
-      "@sse/*": ["src/sse/*"],
-      "@const/*": ["src/const/*"]
+      "@const/*": ["src/const/*"],
+      "@routes/*": ["src/routes/*"],
+      "@controllers/*": ["src/controllers/*"],
+      "@services/*": ["src/services/*"],
+      "@model": ["src/model/index.ts"],
+      "@model/*": ["src/model/*"]
     }
   },
   "include": [
