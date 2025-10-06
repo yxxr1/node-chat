@@ -7,9 +7,8 @@ import mongoSession from 'connect-mongodb-session';
 import expressWs from 'express-ws';
 import { COMMON_CONFIG } from '@config/common';
 import { corsMiddleware, errorMiddleware, checkQuery } from '@middleware';
-import { initApi } from '@routes/api';
-import { initWs } from '@routes/ws';
-import { initSSE } from '@routes/sse';
+import { router as apiRouter } from '@routes/api';
+import { router as sseRouter } from '@routes/sse';
 import { manager } from '@services/chat';
 import { SyncManager } from '@services/chatSync';
 import './types';
@@ -40,9 +39,11 @@ app.use(session({ secret: COMMON_CONFIG.SESSION_SECRET, saveUninitialized: false
 
 app.use(corsMiddleware);
 
-initApi(app);
-initWs(wsApp);
-initSSE(app);
+app.use('/api', apiRouter);
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+wsApp.use('/ws', require('@routes/ws').router);
+app.use('/sse', sseRouter);
+
 app.use(errorMiddleware);
 
 manager
