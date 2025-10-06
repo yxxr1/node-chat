@@ -2,8 +2,7 @@ import { Router } from 'express';
 import { checkSessionMiddleware, sseMiddleware } from '@middleware';
 import { getIdChain } from '@utils/validation';
 import { asyncHandler } from '@utils/errors';
-import { get as chatsSubscribeGet } from '@controllers/sse/chatsSubscribe';
-import { get as subscribeGet } from '@controllers/sse/subscribe';
+import { chatsSubscribeGet, subscribeGet } from '@controllers/sse';
 
 export const router = Router();
 
