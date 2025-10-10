@@ -1,9 +1,7 @@
 import { nanoid } from 'nanoid';
-import { Collection, Filter, FindOptions } from 'mongodb';
-import { chatsCollection } from '@model';
+import { chatsModel } from '@model';
 import type { Message as MessageType, Chat as ChatType } from '@model/types';
 import { MESSAGES_PAGE_SIZE } from '@const/limits';
-import type { ParametersExceptFirst } from '@utils/types';
 import { Subscribable } from './subscribable';
 import { Message, SERVICE_TYPES } from './message';
 import type { UserId, WatcherId, SubscribeAction, CallbackForAction, WildcardSubscribeType, ChatEntity } from './types';
@@ -35,22 +33,18 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
   }
 
   static async createChat(name: string, creatorId?: UserId): Promise<Chat | null> {
-    const chatWithName = await chatsCollection.findOne<Pick<ChatType, 'id'>>({ name }, { projection: { id: 1 } });
+    const chatWithName = await chatsModel.checkChatName(name);
 
-    if (chatWithName === null) {
+    if (!chatWithName) {
       const newChat = new Chat();
 
-      const result = await chatsCollection.insertOne({
+      await chatsModel.createChat({
         id: newChat.id,
         creatorId: creatorId,
         name: name,
         joinedUsers: [],
         messages: [],
       });
-
-      if (!result.insertedId) {
-        throw new Error('cannot create chat');
-      }
 
       return newChat;
     }
@@ -74,34 +68,17 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
     return null;
   }
 
-  async updateChat(...args: ParametersExceptFirst<Collection<ChatType>['updateOne']>): ReturnType<Collection<ChatType>['updateOne']> {
-    const result = await chatsCollection.updateOne({ id: this.id }, ...args);
-
-    if (result.matchedCount !== 1) {
-      throw new Error('cannot modify chat');
-    }
-
-    return result;
-  }
-
-  async findChat<Extra extends object>(
-    filter?: Filter<ChatType>,
-    projection?: FindOptions<ChatType>['projection'],
-  ): Promise<(Extra & ChatType) | null> {
-    return chatsCollection.findOne<Extra & ChatType>({ ...filter, id: this.id }, { projection });
-  }
-
   async join(userId: UserId, userName: string): Promise<boolean> {
-    if (!(await this.isJoined(userId))) {
-      await this.updateChat({ $push: { joinedUsers: userId } });
-
-      this._broadcast({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
-      await this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_JOINED);
-
-      return true;
+    if (await this.isJoined(userId)) {
+      return false;
     }
 
-    return false;
+    await chatsModel.addUserToChat(this.id, userId);
+
+    this._broadcast({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
+    await this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_JOINED);
+
+    return true;
   }
 
   async publish(text: string, fromId: UserId, fromName: string): Promise<MessageType | null> {
@@ -114,21 +91,21 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
 
   async quit(userId: UserId, userName: string): Promise<number | null> {
     if (await this.isJoined(userId)) {
-      await this.updateChat({ $pull: { joinedUsers: userId } });
+      await chatsModel.removeUserFromChat(this.id, userId);
 
       this.closeUserWatchers(userId);
 
       this._broadcast({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
       await this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_LEFT);
 
-      return (await this.findChat())?.joinedUsers.length || 0;
+      return chatsModel.getChatJoinedUsersCount(this.id);
     }
 
     return null;
   }
 
   async isJoined(userId: UserId): Promise<boolean> {
-    return !!(await this.findChat({ joinedUsers: { $elemMatch: { $eq: userId } } }));
+    return chatsModel.isJoined(this.id, userId);
   }
 
   async getMessages(userId: UserId, ...args: Parameters<Chat['_getMessages']>): Promise<MessageType[] | null> {
@@ -141,7 +118,7 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
 
   async getChatEntity(userId?: UserId | null, withMessages = true): Promise<ChatEntity> {
     const isJoined = !!userId && (await this.isJoined(userId));
-    const chat = await this.findChat<{ joinedCount: number }>({}, { name: 1, joinedCount: { $size: '$joinedUsers' } });
+    const chat = await chatsModel.getChatInfo(this.id);
 
     return {
       id: this.id,
@@ -152,11 +129,11 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
   }
 
   async _addMessage(...messageParams: ConstructorParameters<typeof Message>): Promise<MessageType> {
-    const lastMessage = (await this.findChat({}, { messages: { $slice: -1 } }))?.messages || [];
-    const index = lastMessage.length ? lastMessage[0].index + 1 : 0;
+    const lastMessage = await chatsModel.getLastMessage(this.id);
+    const index = lastMessage ? lastMessage.index + 1 : 0;
     const message = new Message(...messageParams);
     message.setIndex(index);
-    await this.updateChat({ $push: { messages: message } });
+    await chatsModel.addMessage(this.id, message);
 
     this._broadcast({ chatId: this.id, messages: [message] }, CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES);
 
@@ -165,32 +142,33 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
 
   async _getMessages(lastMessageId?: MessageType['id'], direction: 1 | -1 = 1, pageSize = MESSAGES_PAGE_SIZE): Promise<MessageType[]> {
     if (lastMessageId) {
-      const { messages } = (await this.findChat({}, { messages: { $elemMatch: { id: lastMessageId } } })) || {};
-      const lastMessageIndex = messages ? messages[0].index : -1;
+      const message = await chatsModel.getMessageById(this.id, lastMessageId);
 
-      if (lastMessageIndex === -1) {
+      if (!message) {
         return [];
       }
 
+      const lastMessageIndex = message.index;
+
       if (Math.sign(direction) === 1) {
-        return (await this.findChat({}, { messages: { $slice: [lastMessageIndex + 1, pageSize] } }))?.messages || [];
+        return await chatsModel.getMessagesSlice(this.id, [lastMessageIndex + 1, pageSize]);
       } else {
-        const startIndex = pageSize > lastMessageIndex ? 0 : lastMessageIndex - pageSize;
+        const startIndex = Math.max(0, lastMessageIndex - pageSize);
         const count = lastMessageIndex - startIndex;
 
         if (count === 0) {
           return [];
         }
 
-        return (await this.findChat({}, { messages: { $slice: [startIndex, count] } }))?.messages || [];
+        return await chatsModel.getMessagesSlice(this.id, [startIndex, count]);
       }
     }
 
-    return (await this.findChat({}, { messages: { $slice: -pageSize } }))?.messages || [];
+    return await chatsModel.getMessagesSlice(this.id, -pageSize);
   }
 
   async _closeChat(): Promise<void> {
-    await chatsCollection.deleteOne({ id: this.id });
+    await chatsModel.deleteChat(this.id);
     this._closeAllWatchers();
   }
 }

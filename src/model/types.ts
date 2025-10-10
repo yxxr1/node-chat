@@ -30,3 +30,5 @@ export interface Chat {
   joinedUsers: string[];
   messages: Message[];
 }
+
+export type ChatInfo = Pick<Chat, 'name' | 'creatorId'> & { joinedCount: number };

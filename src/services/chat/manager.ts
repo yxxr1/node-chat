@@ -1,5 +1,4 @@
-import { chatsCollection } from '@model';
-import type { Chat as ChatDbType } from '@model/types';
+import { chatsModel } from '@model';
 import { MAIN_CHAT_NAME } from '@const/common';
 import { Subscribable } from './subscribable';
 import { Chat, CHAT_SUBSCRIBE_TYPES } from './chat';
@@ -26,7 +25,7 @@ export class Manager extends Subscribable<ManagerSubscribeActions> {
   chats: Chat[] = [];
 
   async initChats() {
-    const chats = await chatsCollection.find<Pick<ChatDbType, 'id'>>({}, { projection: { _id: 0, id: 1 } });
+    const chats = await chatsModel.getAllChatIds();
 
     if (await chats.hasNext()) {
       let chat;
@@ -72,7 +71,7 @@ export class Manager extends Subscribable<ManagerSubscribeActions> {
   }
 
   async deleteChat(chatId: Chat['id'], broadcastExtra?: Record<string, unknown>): Promise<void> {
-    const dbChat = await chatsCollection.findOne<Pick<ChatDbType, 'name'>>({ id: chatId }, { projection: { name: 1 } });
+    const dbChat = await chatsModel.getChatNameById(chatId);
 
     if (!dbChat || (dbChat && dbChat.name !== MAIN_CHAT_NAME)) {
       const chat = this.chats.find(({ id }) => id === chatId);
@@ -86,9 +85,10 @@ export class Manager extends Subscribable<ManagerSubscribeActions> {
   }
 
   async getUserJoinedChats(userId: UserId): Promise<Chat[]> {
-    const isJoined = await Promise.all(this.chats.map((chat) => chat.isJoined(userId)));
+    const chats = [...this.chats];
+    const isJoined = await Promise.all(chats.map((chat) => chat.isJoined(userId)));
 
-    return this.chats.filter((chat, index) => isJoined[index]);
+    return chats.filter((chat, index) => isJoined[index]);
   }
 }
 
