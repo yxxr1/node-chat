@@ -4,10 +4,10 @@ import type { WatchChatsPayload } from '@controllers/types';
 
 const SUBSCRIBE_TIMEOUT = 30000;
 
-type GetOutput = WatchChatsPayload;
+type Output = WatchChatsPayload;
 const emptyResponse = { newChats: [], deletedChatsIds: [], updatedChats: [] };
 
-export const get: RequestHandler<Record<string, never>, GetOutput, void> = async (req, res) => {
+export const chatsSubscribe: RequestHandler<Record<string, never>, Output, void> = async (req, res) => {
   const { userId } = req.session;
 
   const timerId = setTimeout(() => {
@@ -22,7 +22,7 @@ export const get: RequestHandler<Record<string, never>, GetOutput, void> = async
     manager.unsubscribe(chatUpdatedWatcherId);
   });
 
-  const closeQuery = (data: GetOutput) => {
+  const closeQuery = (data: Output) => {
     clearTimeout(timerId);
     manager.unsubscribe(defaultWatcherId);
     manager.unsubscribe(chatUpdatedWatcherId);

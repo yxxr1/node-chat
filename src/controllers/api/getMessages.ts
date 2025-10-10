@@ -14,17 +14,17 @@ const DIRECTION_MAP: Record<(typeof DIRECTIONS)[keyof typeof DIRECTIONS], 1 | -1
   [DIRECTIONS.NEXT]: 1,
 };
 
-type PostInput = {
+type Input = {
   chatId: Chat['id'];
   lastMessageId: Message['id'];
   direction: (typeof DIRECTIONS)[keyof typeof DIRECTIONS];
 };
-type PostOutput = {
+type Output = {
   messages: Message[];
 };
 
-export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = async (req, res) => {
-  const { chatId, lastMessageId, direction } = validateParams<PostInput>(req);
+export const getMessages: RequestHandler<Record<string, never>, Output, Input> = async (req, res) => {
+  const { chatId, lastMessageId, direction } = validateParams<Input>(req);
 
   const chat = manager.getChat(chatId);
 

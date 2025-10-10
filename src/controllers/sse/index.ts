@@ -1,2 +1,2 @@
-export { get as chatsSubscribeGet } from './chatsSubscribe';
-export { get as subscribeGet } from './subscribe';
+export { chatsSubscribeSSE } from './chatsSubscribe';
+export { subscribeSSE } from './subscribe';

@@ -4,19 +4,19 @@ import { validateParams } from '@utils/validation';
 import type { User, UserSettings } from '@controllers/types';
 import { login, logout } from '@services/auth';
 
-type PostInput = {
+type Input = {
   name: User['name'] | null;
   settings?: UserSettings;
 };
-type PostOutput =
+type Output =
   | User
   | {
       id: null;
       name: null;
     };
 
-export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = async (req, res) => {
-  const { name, settings } = validateParams<PostInput>(req);
+export const auth: RequestHandler<Record<string, never>, Output, Input> = async (req, res) => {
+  const { name, settings } = validateParams<Input>(req);
 
   const session = req.session;
 

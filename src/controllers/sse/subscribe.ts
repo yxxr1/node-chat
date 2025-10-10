@@ -13,7 +13,7 @@ type GetInput = {
 };
 type SSEData = SubscribedChatPayload;
 
-export const get: RequestHandler<Record<string, never>, string, GetInput> = async (req, res) => {
+export const subscribeSSE: RequestHandler<Record<string, never>, string, GetInput> = async (req, res) => {
   const { chatId, lastMessageId: lastMessageIdParam, ...rest } = validateParams<GetInput & Headers>(req);
   const lastMessageId: string | undefined = rest['last-event-id'] || lastMessageIdParam;
 

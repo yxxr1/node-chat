@@ -4,13 +4,13 @@ import { ChatNotFound } from '@utils/errors';
 import { validateParams } from '@utils/validation';
 import type { Chat } from '@controllers/types';
 
-type PostInput = {
+type Input = {
   chatId: Chat['id'];
 };
-type PostOutput = Chat;
+type Output = Chat;
 
-export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = async (req, res) => {
-  const { chatId } = validateParams<PostInput>(req);
+export const joinChat: RequestHandler<Record<string, never>, Output, Input> = async (req, res) => {
+  const { chatId } = validateParams<Input>(req);
 
   const chat = manager.getChat(chatId);
 

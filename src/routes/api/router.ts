@@ -1,40 +1,40 @@
 import { Router } from 'express';
-import { body } from 'express-validator';
+import { body, query } from 'express-validator';
 import { checkSessionMiddleware } from '@middleware';
 import { getNameChain, getIdChain, getSettingsChains } from '@utils/validation';
 import { asyncHandler } from '@utils/errors';
 import {
-  userGet,
-  userPost,
-  chatsGet,
-  chatsPost,
-  chatsSubscribeGet,
-  joinPost,
-  quitPost,
-  subscribePost,
-  publishPost,
-  authPost,
-  messagesPost,
+  getUser,
+  editUser,
+  getChats,
+  createChat,
+  chatsSubscribe,
+  joinChat,
+  quitChat,
+  subscribeChat,
+  publishMessage,
+  auth,
+  getMessages,
   MESSAGES_DIRECTIONS,
 } from '@controllers/api';
 import { MAX_MESSAGE_LENGTH } from '@const/limits';
 
 export const router = Router();
 
-router.post('/auth', getNameChain('name', true), ...getSettingsChains(), asyncHandler(authPost));
-router.post('/user', checkSessionMiddleware, getNameChain('name'), ...getSettingsChains(), asyncHandler(userPost));
-router.get('/user', checkSessionMiddleware, asyncHandler(userGet));
-router.post('/chats', checkSessionMiddleware, getNameChain('name'), asyncHandler(chatsPost));
-router.get('/chats', checkSessionMiddleware, asyncHandler(chatsGet));
-router.get('/chats-subscribe', checkSessionMiddleware, asyncHandler(chatsSubscribeGet));
-router.post('/join', checkSessionMiddleware, getIdChain('chatId'), asyncHandler(joinPost));
-router.post('/quit', checkSessionMiddleware, getIdChain('chatId'), asyncHandler(quitPost));
-router.post(
+router.post('/auth', getNameChain('name', true), ...getSettingsChains(), asyncHandler(auth));
+router.post('/user', checkSessionMiddleware, getNameChain('name'), ...getSettingsChains(), asyncHandler(editUser));
+router.get('/user', checkSessionMiddleware, asyncHandler(getUser));
+router.post('/chats', checkSessionMiddleware, getNameChain('name'), asyncHandler(createChat));
+router.get('/chats', checkSessionMiddleware, asyncHandler(getChats));
+router.get('/chats-subscribe', checkSessionMiddleware, asyncHandler(chatsSubscribe));
+router.post('/join', checkSessionMiddleware, getIdChain('chatId'), asyncHandler(joinChat));
+router.post('/quit', checkSessionMiddleware, getIdChain('chatId'), asyncHandler(quitChat));
+router.get(
   '/subscribe',
   checkSessionMiddleware,
-  getIdChain('chatId'),
-  getIdChain('lastMessageId').optional(),
-  asyncHandler(subscribePost),
+  getIdChain('chatId', 'query'),
+  getIdChain('lastMessageId', 'query').optional(),
+  asyncHandler(subscribeChat),
 );
 router.post(
   '/publish',
@@ -45,16 +45,16 @@ router.post(
     .trim()
     .isLength({ min: 1, max: MAX_MESSAGE_LENGTH })
     .withMessage(`Message must be length from 1 to ${MAX_MESSAGE_LENGTH}`),
-  asyncHandler(publishPost),
+  asyncHandler(publishMessage),
 );
-router.post(
+router.get(
   '/messages',
   checkSessionMiddleware,
-  getIdChain('chatId'),
-  getIdChain('lastMessageId').optional(),
-  body('direction')
+  getIdChain('chatId', 'query'),
+  getIdChain('lastMessageId', 'query').optional(),
+  query('direction')
     .default(MESSAGES_DIRECTIONS.NEXT)
     .matches(`^(${MESSAGES_DIRECTIONS.PREV}|${MESSAGES_DIRECTIONS.NEXT})$`)
     .withMessage(`Direction must be '${MESSAGES_DIRECTIONS.PREV}' or '${MESSAGES_DIRECTIONS.NEXT}'`),
-  asyncHandler(messagesPost),
+  asyncHandler(getMessages),
 );

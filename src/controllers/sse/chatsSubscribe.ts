@@ -4,7 +4,7 @@ import type { WatchChatsPayload } from '@controllers/types';
 
 type SSEData = WatchChatsPayload;
 
-export const get: RequestHandler<Record<string, never>, string> = (req, res) => {
+export const chatsSubscribeSSE: RequestHandler<Record<string, never>, string> = (req, res) => {
   const { userId } = req.session;
 
   res.on('close', () => {

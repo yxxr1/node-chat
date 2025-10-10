@@ -6,14 +6,14 @@ import type { Chat, Message, SubscribedChatPayload } from '@controllers/types';
 
 const SUBSCRIBE_TIMEOUT = 10000;
 
-type PostInput = {
+type Input = {
   chatId: Chat['id'];
   lastMessageId?: Message['id'];
 };
-type PostOutput = SubscribedChatPayload;
+type Output = SubscribedChatPayload;
 
-export const post: RequestHandler<Record<string, never>, PostOutput, PostInput> = async (req, res) => {
-  const { chatId, lastMessageId } = validateParams<PostInput>(req);
+export const subscribeChat: RequestHandler<Record<string, never>, Output, Input> = async (req, res) => {
+  const { chatId, lastMessageId } = validateParams<Input>(req);
 
   const chat = manager.getChat(chatId);
 
