@@ -16,14 +16,12 @@
     "baseUrl": ".",
     "paths": {
       "@config/*": ["src/config/*"],
-      "@middleware": ["src/middleware/index.ts"],
       "@middleware/*": ["src/middleware/*"],
       "@utils/*": ["src/utils/*"],
       "@const/*": ["src/const/*"],
       "@routes/*": ["src/routes/*"],
       "@controllers/*": ["src/controllers/*"],
       "@services/*": ["src/services/*"],
-      "@model": ["src/model/index.ts"],
       "@model/*": ["src/model/*"]
     }
   },

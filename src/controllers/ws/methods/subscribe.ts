@@ -1,6 +1,5 @@
 import { manager, CHAT_SUBSCRIBE_TYPES } from '@services/chat';
 import type { Chat, Message } from '@controllers/types';
-import type { WatcherId } from '@services/chat/types';
 import { WSConnectionManager } from '../manager';
 import type { SubscribedChatMessage, WSMessageHandler } from '../types';
 
@@ -15,7 +14,7 @@ type Context = {
 
 export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
   { chatId, lastMessageId },
-  { userId },
+  { id: userId },
   ws,
   { connectionManager },
 ) => {
@@ -42,7 +41,7 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
       }
 
       const unsubscribeWatcher = () => {
-        chat.unsubscribe(watcherId as WatcherId);
+        chat.unsubscribe(watcherId as string);
       };
 
       const watcherId = await chat.subscribeIfJoined(

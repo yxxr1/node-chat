@@ -1,6 +1,6 @@
 import * as WebSocket from 'ws';
-import type { SessionData } from 'express-session';
 import type { SubscribedChatPayload, WatchChatsPayload } from '@controllers/types';
+import { UserDto } from '@services/user';
 import type { PublishPayload, SubscribePayload } from './methods';
 
 export type IncomingMessagesPayloads = {
@@ -24,7 +24,7 @@ export type WatchChatsMessage = {
 
 export type WSMessageHandler<Payload, Context = void, Return = void> = (
   payload: Payload,
-  session: SessionData,
+  tokenData: UserDto,
   ws: WebSocket,
   context: Context,
 ) => Return;

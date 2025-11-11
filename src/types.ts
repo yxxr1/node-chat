@@ -1,10 +1,10 @@
-import 'express-session';
-import { UserSettings } from '@controllers/types';
+import { UserDto } from '@services/user';
 
-declare module 'express-session' {
-  interface SessionData {
-    userId: string;
-    name: string;
-    settings: UserSettings;
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface Request {
+      tokenData?: UserDto;
+    }
   }
 }

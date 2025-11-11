@@ -4,6 +4,7 @@ import { urlAlphabet } from 'nanoid';
 import { HttpError } from '@utils/errors';
 import { MAX_MESSAGE_LENGTH } from '@const/limits';
 import { CONNECTION_METHODS, UI_THEMES } from '@const/settings';
+import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH } from '@const/limits';
 
 const nameRegexp = /^[a-zA-Zа-яА-Я0-9]{3,12}$/;
 
@@ -18,12 +19,14 @@ export const validateParams = <Params = Record<string, unknown>>(req: Request): 
   return matchedData(req) as Params;
 };
 
-export const getNameChain = (fieldName: string, allowNull = false): ValidationChain =>
-  body(fieldName)
-    .exists({ values: allowNull ? 'undefined' : 'null' })
-    .if((value) => value !== null)
+export const getNameChain = (fieldName: string): ValidationChain => body(fieldName).isString().matches(nameRegexp);
+
+export const getPasswordChain = () =>
+  body('password')
     .isString()
-    .matches(nameRegexp);
+    .trim()
+    .isLength({ min: MIN_PASSWORD_LENGTH, max: MAX_PASSWORD_LENGTH })
+    .withMessage(`Password length ${MIN_PASSWORD_LENGTH}-${MAX_PASSWORD_LENGTH}`);
 
 export const getIdChain = (fieldName: string, type: 'body' | 'query' | 'header' = 'body'): ValidationChain =>
   ({ body, query, header })[type](fieldName).isString().isLength({ min: 21, max: 21 }).isWhitelisted(urlAlphabet);
@@ -62,4 +65,12 @@ export const isValidMessage = (value: string | unknown): boolean => {
   }
 
   return false;
+};
+
+export const getTokenData = (req: Request) => {
+  if (!req.tokenData) {
+    throw new Error('invalid session');
+  }
+
+  return req.tokenData;
 };

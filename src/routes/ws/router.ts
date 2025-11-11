@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { wsCheckSessionMiddleware } from '@middleware';
+import { wsAuthMiddleware } from '@middleware/auth';
 import { wsHandler } from '@controllers/ws';
 
 export const router = Router();
 
-router.ws('/', wsCheckSessionMiddleware, wsHandler);
+router.ws('/', wsAuthMiddleware, wsHandler);

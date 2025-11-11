@@ -1,2 +1,1 @@
-export * from './sync';
-export * from './types';
+export { ChatSyncService } from './chatSyncService';

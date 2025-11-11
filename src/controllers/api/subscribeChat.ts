@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 import { manager, CHAT_SUBSCRIBE_TYPES } from '@services/chat';
 import { ChatNotFound, NotJoinedChat } from '@utils/errors';
-import { validateParams } from '@utils/validation';
+import { getTokenData, validateParams } from '@utils/validation';
 import type { Chat, Message, SubscribedChatPayload } from '@controllers/types';
 
 const SUBSCRIBE_TIMEOUT = 10000;
@@ -14,6 +14,7 @@ type Output = SubscribedChatPayload;
 
 export const subscribeChat: RequestHandler<Record<string, never>, Output, Input> = async (req, res) => {
   const { chatId, lastMessageId } = validateParams<Input>(req);
+  const { id: userId } = getTokenData(req);
 
   const chat = manager.getChat(chatId);
 
@@ -21,7 +22,7 @@ export const subscribeChat: RequestHandler<Record<string, never>, Output, Input>
     let unreceivedMessages: Message[] | null = [];
 
     if (lastMessageId) {
-      unreceivedMessages = await chat.getMessages(req.session.userId as string, lastMessageId);
+      unreceivedMessages = await chat.getMessages(userId, lastMessageId);
     }
 
     if (unreceivedMessages === null) {
@@ -32,7 +33,7 @@ export const subscribeChat: RequestHandler<Record<string, never>, Output, Input>
       let timerId: NodeJS.Timeout;
 
       const watcherId = await chat.subscribeIfJoined(
-        req.session.userId as string,
+        userId,
         ({ payload }) => {
           clearTimeout(timerId);
           res.json(payload);

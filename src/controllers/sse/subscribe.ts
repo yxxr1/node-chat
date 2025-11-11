@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 import { CHAT_SUBSCRIBE_TYPES, manager } from '@services/chat';
 import type { Chat, Message, SubscribedChatPayload } from '@controllers/types';
-import { validateParams } from '@utils/validation';
+import { getTokenData, validateParams } from '@utils/validation';
 import { ChatNotFound, NotJoinedChat } from '@utils/errors';
 
 type Headers = {
@@ -16,6 +16,7 @@ type SSEData = SubscribedChatPayload;
 export const subscribeSSE: RequestHandler<Record<string, never>, string, GetInput> = async (req, res) => {
   const { chatId, lastMessageId: lastMessageIdParam, ...rest } = validateParams<GetInput & Headers>(req);
   const lastMessageId: string | undefined = rest['last-event-id'] || lastMessageIdParam;
+  const { id: userId } = getTokenData(req);
 
   const chat = manager.getChat(chatId);
 
@@ -33,7 +34,7 @@ export const subscribeSSE: RequestHandler<Record<string, never>, string, GetInpu
     let unreceivedMessages: Message[] | null = [];
 
     if (lastMessageId) {
-      unreceivedMessages = await chat.getMessages(req.session.userId as string, lastMessageId);
+      unreceivedMessages = await chat.getMessages(userId, lastMessageId);
     }
 
     if (unreceivedMessages === null) {
@@ -44,7 +45,7 @@ export const subscribeSSE: RequestHandler<Record<string, never>, string, GetInpu
   })();
 
   const watcherId = await chat.subscribeIfJoined(
-    req.session.userId as string,
+    userId,
     ({ payload }) => {
       writeToUser(payload);
     },

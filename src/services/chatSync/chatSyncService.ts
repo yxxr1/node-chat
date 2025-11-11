@@ -13,7 +13,7 @@ function assertIsSyncData(data: unknown): asserts data is SyncData {
   throw new Error('not SyncData');
 }
 
-export class SyncManager {
+export class ChatSyncService {
   instanceId: string;
   _channelName: string;
   _publisher: ReturnType<typeof createClient>;

@@ -1,1 +1,1 @@
-export * from './handler';
+export { wsHandler } from './handler';

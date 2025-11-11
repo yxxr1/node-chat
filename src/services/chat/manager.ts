@@ -1,4 +1,4 @@
-import { chatsModel } from '@model';
+import { chatsModel } from '@model/chats';
 import { MAIN_CHAT_NAME } from '@const/common';
 import { Subscribable } from './subscribable';
 import { Chat, CHAT_SUBSCRIBE_TYPES } from './chat';

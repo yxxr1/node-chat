@@ -1,28 +1,28 @@
 import { RequestHandler } from 'express';
 import type { User, UserSettings } from '@controllers/types';
-import { validateParams } from '@utils/validation';
+import { getTokenData, validateParams } from '@utils/validation';
+import { userModel } from '@model/user';
 
 type Input = {
-  name: User['name'];
-  settings?: UserSettings;
+  username: User['username'];
+  settings?: Partial<UserSettings>;
 };
 type Output = User;
 
-export const editUser: RequestHandler<Record<string, never>, Output, Input> = (req, res) => {
-  const { name, settings } = validateParams<Input>(req);
+export const editUser: RequestHandler<Record<string, never>, Output, Input> = async (req, res) => {
+  const { username, settings } = validateParams<Input>(req);
+  const { id: userId } = getTokenData(req);
 
-  req.session.name = name;
+  await userModel.updateUser(userId, { username, settings });
+  const user = await userModel.getUser(userId);
 
-  if (settings) {
-    req.session.settings = {
-      ...req.session.settings,
-      ...settings,
-    };
+  if (!user) {
+    throw new Error('cant get user');
   }
 
   res.json({
-    id: req.session.userId as User['id'],
-    name: req.session.name as User['name'],
-    settings: req.session.settings as UserSettings,
+    id: user.id,
+    username: user.username,
+    settings: user.settings,
   });
 };
