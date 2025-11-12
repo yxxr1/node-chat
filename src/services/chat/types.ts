@@ -1,4 +1,4 @@
-import type { Chat as ChatType } from '@model/chats';
+import type { Chat as ChatType } from '@/model/chats';
 
 export type WatcherCallback<Data extends SubscribeAction = SubscribeAction> = (data: Data) => void;
 export type WatcherId = string;

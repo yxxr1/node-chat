@@ -1,8 +1,8 @@
 import { RequestHandler } from 'express';
-import { manager, CHAT_SUBSCRIBE_TYPES } from '@services/chat';
-import { ChatNotFound, NotJoinedChat } from '@utils/errors';
-import { getTokenData, validateParams } from '@utils/validation';
-import type { Chat, Message, SubscribedChatPayload } from '@controllers/types';
+import { manager, CHAT_SUBSCRIBE_TYPES } from '@/services/chat';
+import { ChatNotFound, NotJoinedChat } from '@/utils/errors';
+import { getTokenData, validateParams } from '@/utils/validation';
+import type { Chat, Message, SubscribedChatPayload } from '@/controllers/types';
 
 const SUBSCRIBE_TIMEOUT = 10000;
 

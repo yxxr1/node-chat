@@ -1,9 +1,9 @@
 import { RequestHandler } from 'express';
-import { HttpError } from '@utils/errors';
-import { validateParams } from '@utils/validation';
-import { userService } from '@services/user';
-import type { TokenPair } from '@controllers/types';
-import { setRefreshTokenCookie } from '@controllers/utils';
+import { HttpError } from '@/utils/errors';
+import { validateParams } from '@/utils/validation';
+import { userService } from '@/services/user';
+import type { TokenPair } from '@/controllers/types';
+import { setRefreshTokenCookie } from '@/controllers/utils';
 
 type Headers = { refreshToken: string };
 type Output = TokenPair;

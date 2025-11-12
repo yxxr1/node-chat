@@ -1,6 +1,6 @@
 import * as WebSocket from 'ws';
-import type { SubscribedChatPayload, WatchChatsPayload } from '@controllers/types';
-import { UserDto } from '@services/user';
+import type { SubscribedChatPayload, WatchChatsPayload } from '@/controllers/types';
+import { UserDto } from '@/services/user';
 import type { PublishPayload, SubscribePayload } from './methods';
 
 export type IncomingMessagesPayloads = {

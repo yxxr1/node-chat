@@ -1,5 +1,5 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { COMMON_CONFIG } from '@config/common';
+import { COMMON_CONFIG } from '@/config/common';
 import { ACCESS_TOKEN_EXPIRES, REFRESH_TOKEN_EXPIRES } from './const';
 import { TokenPair } from './types';
 

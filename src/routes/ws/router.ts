@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { wsAuthMiddleware } from '@middleware/auth';
-import { wsHandler } from '@controllers/ws';
+import { wsAuthMiddleware } from '@/middleware/auth';
+import { wsHandler } from '@/controllers/ws';
 
 export const router = Router();
 

@@ -1,8 +1,8 @@
 import { RequestHandler } from 'express';
-import { manager } from '@services/chat';
-import { ChatNotFound, NotJoinedChat } from '@utils/errors';
-import { getTokenData, validateParams } from '@utils/validation';
-import type { Chat, Message } from '@controllers/types';
+import { manager } from '@/services/chat';
+import { ChatNotFound, NotJoinedChat } from '@/utils/errors';
+import { getTokenData, validateParams } from '@/utils/validation';
+import type { Chat, Message } from '@/controllers/types';
 
 export const DIRECTIONS = {
   PREV: 'PREV',

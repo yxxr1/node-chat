@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { body, query, cookie } from 'express-validator';
-import { authMiddleware } from '@middleware/auth';
-import { getNameChain, getIdChain, getSettingsChains, getPasswordChain } from '@utils/validation';
-import { asyncHandler } from '@utils/errors';
+import { authMiddleware } from '@/middleware/auth';
+import { getNameChain, getIdChain, getSettingsChains, getPasswordChain } from '@/utils/validation';
+import { asyncHandler } from '@/utils/errors';
 import {
   getUser,
   editUser,
@@ -19,8 +19,8 @@ import {
   logout,
   refreshToken,
   MESSAGES_DIRECTIONS,
-} from '@controllers/api';
-import { MAX_MESSAGE_LENGTH } from '@const/limits';
+} from '@/controllers/api';
+import { MAX_MESSAGE_LENGTH } from '@/const/limits';
 
 export const router = Router();
 

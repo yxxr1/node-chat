@@ -1,8 +1,8 @@
 import { RequestHandler } from 'express';
-import { CHAT_SUBSCRIBE_TYPES, manager } from '@services/chat';
-import type { Chat, Message, SubscribedChatPayload } from '@controllers/types';
-import { getTokenData, validateParams } from '@utils/validation';
-import { ChatNotFound, NotJoinedChat } from '@utils/errors';
+import { CHAT_SUBSCRIBE_TYPES, manager } from '@/services/chat';
+import type { Chat, Message, SubscribedChatPayload } from '@/controllers/types';
+import { getTokenData, validateParams } from '@/utils/validation';
+import { ChatNotFound, NotJoinedChat } from '@/utils/errors';
 
 type Headers = {
   'last-event-id'?: string;

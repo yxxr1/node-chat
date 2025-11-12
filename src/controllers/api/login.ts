@@ -1,9 +1,9 @@
 import { RequestHandler } from 'express';
-import { HttpError } from '@utils/errors';
-import { validateParams } from '@utils/validation';
-import { userService } from '@services/user';
-import type { AuthData } from '@controllers/types';
-import { setRefreshTokenCookie } from '@controllers/utils';
+import { HttpError } from '@/utils/errors';
+import { validateParams } from '@/utils/validation';
+import { userService } from '@/services/user';
+import type { AuthData } from '@/controllers/types';
+import { setRefreshTokenCookie } from '@/controllers/utils';
 
 type Input = {
   username: string;

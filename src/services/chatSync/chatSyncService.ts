@@ -1,8 +1,8 @@
 import { createClient } from 'redis';
 import { nanoid } from 'nanoid';
-import { Manager, Chat } from '@services/chat';
-import type { ManagerSubscribeActions, ChatSubscribeActions } from '@services/chat';
-import { isObject } from '@utils/common';
+import { Manager, Chat } from '@/services/chat';
+import type { ManagerSubscribeActions, ChatSubscribeActions } from '@/services/chat';
+import { isObject } from '@/utils/common';
 import { SyncData } from './types';
 
 function assertIsSyncData(data: unknown): asserts data is SyncData {

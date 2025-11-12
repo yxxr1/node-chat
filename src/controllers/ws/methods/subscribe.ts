@@ -1,5 +1,5 @@
-import { manager, CHAT_SUBSCRIBE_TYPES } from '@services/chat';
-import type { Chat, Message } from '@controllers/types';
+import { manager, CHAT_SUBSCRIBE_TYPES } from '@/services/chat';
+import type { Chat, Message } from '@/controllers/types';
 import { WSConnectionManager } from '../manager';
 import type { SubscribedChatMessage, WSMessageHandler } from '../types';
 

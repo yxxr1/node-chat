@@ -1,4 +1,4 @@
-import type { ChatSubscribeActions, ManagerSubscribeActions } from '@services/chat';
+import type { ChatSubscribeActions, ManagerSubscribeActions } from '@/services/chat';
 
 export type SyncData = (
   | {

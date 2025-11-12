@@ -1,8 +1,8 @@
 import { RequestHandler } from 'express';
-import { manager } from '@services/chat';
-import { ChatNotFound, NotJoinedChat } from '@utils/errors';
-import type { Chat, Message } from '@controllers/types';
-import { getTokenData, validateParams } from '@utils/validation';
+import { manager } from '@/services/chat';
+import { ChatNotFound, NotJoinedChat } from '@/utils/errors';
+import type { Chat, Message } from '@/controllers/types';
+import { getTokenData, validateParams } from '@/utils/validation';
 
 type Input = {
   chatId: Chat['id'];

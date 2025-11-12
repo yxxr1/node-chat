@@ -1,9 +1,9 @@
-import type { Message } from '@model/chats';
+import type { Message } from '@/model/chats';
 
-export type { UserSettings, User } from '@model/user';
-export type { Message } from '@model/chats';
+export type { UserSettings, User } from '@/model/user';
+export type { Message } from '@/model/chats';
 
-export type { ChatEntity as Chat } from '@services/chat';
+export type { ChatEntity as Chat } from '@/services/chat';
 
 export interface SubscribedChatPayload {
   chatId: Chat['id'];
@@ -16,5 +16,5 @@ export interface WatchChatsPayload {
   updatedChats: Chat[];
 }
 
-export type { AuthData } from '@services/user';
-export type { TokenPair } from '@services/token';
+export type { AuthData } from '@/services/user';
+export type { TokenPair } from '@/services/token';

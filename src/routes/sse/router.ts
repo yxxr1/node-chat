@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { authByRefreshTokenMiddleware } from '@middleware/auth';
-import { sseMiddleware } from '@middleware/sse';
-import { getIdChain } from '@utils/validation';
-import { asyncHandler } from '@utils/errors';
-import { chatsSubscribeSSE, subscribeSSE } from '@controllers/sse';
+import { authByRefreshTokenMiddleware } from '@/middleware/auth';
+import { sseMiddleware } from '@/middleware/sse';
+import { getIdChain } from '@/utils/validation';
+import { asyncHandler } from '@/utils/errors';
+import { chatsSubscribeSSE, subscribeSSE } from '@/controllers/sse';
 
 export const router = Router();
 

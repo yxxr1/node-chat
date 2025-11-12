@@ -1,4 +1,4 @@
-import type { Chat } from '@controllers/types';
+import type { Chat } from '@/controllers/types';
 
 export class WSConnectionManager {
   subscribedChats: Chat['id'][] = [];

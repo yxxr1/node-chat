@@ -1,8 +1,8 @@
 import { nanoid } from 'nanoid';
-import { chatsModel } from '@model/chats';
-import type { Message as MessageType, Chat as ChatType } from '@model/chats';
-import { userModel } from '@model/user';
-import { MESSAGES_PAGE_SIZE } from '@const/limits';
+import { chatsModel } from '@/model/chats';
+import type { Message as MessageType, Chat as ChatType } from '@/model/chats';
+import { userModel } from '@/model/user';
+import { MESSAGES_PAGE_SIZE } from '@/const/limits';
 import { Subscribable } from './subscribable';
 import { Message, SERVICE_TYPES } from './message';
 import type { UserId, WatcherId, SubscribeAction, CallbackForAction, WildcardSubscribeType, ChatEntity } from './types';

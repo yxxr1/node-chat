@@ -1,5 +1,5 @@
-import { manager } from '@services/chat';
-import type { Chat } from '@controllers/types';
+import { manager } from '@/services/chat';
+import type { Chat } from '@/controllers/types';
 import type { WSMessageHandler } from '../types';
 import { WSConnectionManager } from '../manager';
 

@@ -15,14 +15,7 @@
     "rootDir": "src",
     "baseUrl": ".",
     "paths": {
-      "@config/*": ["src/config/*"],
-      "@middleware/*": ["src/middleware/*"],
-      "@utils/*": ["src/utils/*"],
-      "@const/*": ["src/const/*"],
-      "@routes/*": ["src/routes/*"],
-      "@controllers/*": ["src/controllers/*"],
-      "@services/*": ["src/services/*"],
-      "@model/*": ["src/model/*"]
+      "@/*": ["src/*"]
     }
   },
   "include": [

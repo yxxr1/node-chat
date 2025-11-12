@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb';
-import { COMMON_CONFIG } from '@config/common';
+import { COMMON_CONFIG } from '@/config/common';
 
 let client: MongoClient;
 

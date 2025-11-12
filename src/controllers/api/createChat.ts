@@ -1,8 +1,8 @@
 import { RequestHandler } from 'express';
-import { manager, Chat } from '@services/chat';
-import { HttpError } from '@utils/errors';
-import { getTokenData, validateParams } from '@utils/validation';
-import type { Chat as ChatType } from '@controllers/types';
+import { manager, Chat } from '@/services/chat';
+import { HttpError } from '@/utils/errors';
+import { getTokenData, validateParams } from '@/utils/validation';
+import type { Chat as ChatType } from '@/controllers/types';
 
 type Input = {
   name: ChatType['name'];

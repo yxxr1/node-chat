@@ -1,4 +1,4 @@
-import { isObject } from '@utils/common';
+import { isObject } from '@/utils/common';
 import type { IncomingMessagesPayloads, IncomingMessageTypes, WSIncomingMessage } from './types';
 
 type Callback<T = WSIncomingMessage['payload']> = (payload: T) => void;

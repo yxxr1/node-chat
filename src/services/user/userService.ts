@@ -1,10 +1,10 @@
 import { nanoid } from 'nanoid';
 import bcrypt from 'bcrypt';
-import { userModel } from '@model/user';
-import { tokenModel } from '@model/token';
-import { tokenService } from '@services/token';
-import { manager } from '@services/chat';
-import { TokenPair } from '@services/token';
+import { userModel } from '@/model/user';
+import { tokenModel } from '@/model/token';
+import { tokenService } from '@/services/token';
+import { manager } from '@/services/chat';
+import { TokenPair } from '@/services/token';
 import { UserDto } from './userDto';
 import { DEFAULT_USER_SETTINGS } from './const';
 import { AuthData } from './types';

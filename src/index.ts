@@ -3,14 +3,14 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import expressWs from 'express-ws';
-import { COMMON_CONFIG } from '@config/common';
-import { corsMiddleware } from '@middleware/cors';
-import { errorMiddleware } from '@middleware/error';
-import { checkQuery } from '@middleware/check-query';
-import { router as apiRouter } from '@routes/api';
-import { router as sseRouter } from '@routes/sse';
-import { manager } from '@services/chat';
-import { ChatSyncService } from '@services/chatSync';
+import { COMMON_CONFIG } from '@/config/common';
+import { corsMiddleware } from '@/middleware/cors';
+import { errorMiddleware } from '@/middleware/error';
+import { checkQuery } from '@/middleware/check-query';
+import { router as apiRouter } from '@/routes/api';
+import { router as sseRouter } from '@/routes/sse';
+import { manager } from '@/services/chat';
+import { ChatSyncService } from '@/services/chatSync';
 import './types';
 
 const app = express();
@@ -25,7 +25,7 @@ app.use(corsMiddleware);
 
 app.use('/api', apiRouter);
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-wsApp.use('/ws', require('@routes/ws').router);
+wsApp.use('/ws', require('@/routes/ws').router);
 app.use('/sse', sseRouter);
 
 app.use(errorMiddleware);

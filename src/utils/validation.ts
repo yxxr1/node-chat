@@ -1,10 +1,10 @@
 import { validationResult, matchedData, body, query, header, ValidationChain } from 'express-validator';
 import { Request } from 'express';
 import { urlAlphabet } from 'nanoid';
-import { HttpError } from '@utils/errors';
-import { MAX_MESSAGE_LENGTH } from '@const/limits';
-import { CONNECTION_METHODS, UI_THEMES } from '@const/settings';
-import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH } from '@const/limits';
+import { HttpError } from '@/utils/errors';
+import { MAX_MESSAGE_LENGTH } from '@/const/limits';
+import { CONNECTION_METHODS, UI_THEMES } from '@/const/settings';
+import { MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH } from '@/const/limits';
 
 const nameRegexp = /^[a-zA-Zа-яА-Я0-9]{3,12}$/;
 
