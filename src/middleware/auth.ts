@@ -1,8 +1,8 @@
-import { RequestHandler } from 'express';
-import { WebsocketRequestHandler } from 'express-ws';
+import type { RequestHandler } from 'express';
+import type { WebsocketRequestHandler } from 'express-ws';
 import { HttpError } from '@/utils/errors';
 import { tokenService } from '@/services/token';
-import { UserDto } from '@/services/user';
+import type { UserDto } from '@/services/user';
 
 export const authMiddleware: RequestHandler = (req, res, next) => {
   const accessToken = req.headers.authorization?.split(' ')[1];

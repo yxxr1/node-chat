@@ -1,4 +1,4 @@
-import { WebsocketRequestHandler } from 'express-ws';
+import type { WebsocketRequestHandler } from 'express-ws';
 import { manager, MANAGER_SUBSCRIBE_TYPES } from '@/services/chat';
 import { getTokenData, isId, isValidMessage } from '@/utils/validation';
 import { publish, subscribe } from './methods';

@@ -1,7 +1,8 @@
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import type { JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { COMMON_CONFIG } from '@/config/common';
 import { ACCESS_TOKEN_EXPIRES, REFRESH_TOKEN_EXPIRES } from './const';
-import { TokenPair } from './types';
+import type { TokenPair } from './types';
 
 export class TokenService {
   generateTokens<T extends object>(payload: T): TokenPair {

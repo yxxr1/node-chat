@@ -1,4 +1,4 @@
-import { RequestHandler } from 'express';
+import type { RequestHandler } from 'express';
 import type { User, UserSettings } from '@/controllers/types';
 import { getTokenData, validateParams } from '@/utils/validation';
 import { userModel } from '@/model/user';

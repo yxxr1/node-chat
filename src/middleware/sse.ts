@@ -1,4 +1,4 @@
-import { RequestHandler } from 'express';
+import type { RequestHandler } from 'express';
 
 export const sseMiddleware: RequestHandler = (req, res, next) => {
   res.setHeader('Content-Type', 'text/event-stream');

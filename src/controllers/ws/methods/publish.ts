@@ -1,7 +1,7 @@
 import { manager } from '@/services/chat';
 import type { Chat } from '@/controllers/types';
 import type { WSMessageHandler } from '../types';
-import { WSConnectionManager } from '../manager';
+import type { WSConnectionManager } from '../manager';
 
 export type PublishPayload = {
   chatId: Chat['id'];

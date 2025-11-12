@@ -1,4 +1,4 @@
-import { ErrorRequestHandler } from 'express';
+import type { ErrorRequestHandler } from 'express';
 import { HttpError } from '@/utils/errors';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

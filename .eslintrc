@@ -20,6 +20,7 @@
     "semi": ["error", "always"],
     "quotes": ["error", "single"],
     "no-case-declarations": "off",
-    "no-async-promise-executor": "off"
+    "no-async-promise-executor": "off",
+    "@typescript-eslint/consistent-type-imports": "error"
   }
 }

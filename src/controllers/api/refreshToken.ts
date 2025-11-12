@@ -1,4 +1,4 @@
-import { RequestHandler } from 'express';
+import type { RequestHandler } from 'express';
 import { HttpError } from '@/utils/errors';
 import { validateParams } from '@/utils/validation';
 import { userService } from '@/services/user';

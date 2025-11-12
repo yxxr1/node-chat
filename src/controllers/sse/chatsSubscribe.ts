@@ -1,4 +1,4 @@
-import { RequestHandler } from 'express';
+import type { RequestHandler } from 'express';
 import { manager, MANAGER_SUBSCRIBE_TYPES } from '@/services/chat';
 import type { WatchChatsPayload } from '@/controllers/types';
 import { getTokenData } from '@/utils/validation';

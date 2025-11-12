@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import type { Response } from 'express';
 import { REFRESH_TOKEN_EXPIRES } from '@/services/token';
 
 export const setRefreshTokenCookie = (res: Response, token: string) =>

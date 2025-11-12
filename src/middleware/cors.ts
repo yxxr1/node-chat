@@ -1,4 +1,4 @@
-import { RequestHandler } from 'express';
+import type { RequestHandler } from 'express';
 import { COMMON_CONFIG } from '@/config/common';
 
 export const corsMiddleware: RequestHandler = (req, res, next) => {

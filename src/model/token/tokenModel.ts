@@ -1,4 +1,4 @@
-import { Collection } from 'mongodb';
+import type { Collection } from 'mongodb';
 import { initDb } from '../db';
 import type { TokenRecord } from './types';
 

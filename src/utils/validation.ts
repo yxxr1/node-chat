@@ -1,5 +1,6 @@
-import { validationResult, matchedData, body, query, header, ValidationChain } from 'express-validator';
-import { Request } from 'express';
+import type { ValidationChain } from 'express-validator';
+import { validationResult, matchedData, body, query, header } from 'express-validator';
+import type { Request } from 'express';
 import { urlAlphabet } from 'nanoid';
 import { HttpError } from '@/utils/errors';
 import { MAX_MESSAGE_LENGTH } from '@/const/limits';

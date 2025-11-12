@@ -1,4 +1,4 @@
-import { Collection, Filter, FindOptions } from 'mongodb';
+import type { Collection, Filter, FindOptions } from 'mongodb';
 import type { User } from '@/model/user';
 import type { ParametersExceptFirst } from '@/utils/types';
 import type { ChatRecord, Message, ChatInfo } from './types';

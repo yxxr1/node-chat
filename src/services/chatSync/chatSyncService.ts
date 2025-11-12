@@ -1,9 +1,9 @@
 import { createClient } from 'redis';
 import { nanoid } from 'nanoid';
-import { Manager, Chat } from '@/services/chat';
-import type { ManagerSubscribeActions, ChatSubscribeActions } from '@/services/chat';
+import { Chat } from '@/services/chat';
+import type { ManagerSubscribeActions, ChatSubscribeActions, Manager } from '@/services/chat';
 import { isObject } from '@/utils/common';
-import { SyncData } from './types';
+import type { SyncData } from './types';
 
 function assertIsSyncData(data: unknown): asserts data is SyncData {
   if (isObject(data) && typeof data.instanceId === 'string' && typeof data.source === 'string' && typeof isObject(data.action)) {

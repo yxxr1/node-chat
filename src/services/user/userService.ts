@@ -4,10 +4,10 @@ import { userModel } from '@/model/user';
 import { tokenModel } from '@/model/token';
 import { tokenService } from '@/services/token';
 import { manager } from '@/services/chat';
-import { TokenPair } from '@/services/token';
+import type { TokenPair } from '@/services/token';
 import { UserDto } from './userDto';
 import { DEFAULT_USER_SETTINGS } from './const';
-import { AuthData } from './types';
+import type { AuthData } from './types';
 
 export class UserService {
   async registration(username: string, password: string): Promise<AuthData> {
