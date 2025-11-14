@@ -1,4 +1,4 @@
-import { RequestHandler } from 'express';
+import type { RequestHandler } from 'express';
 
 const ALLOWED_CONTENT_TYPES = ['application/json'];
 

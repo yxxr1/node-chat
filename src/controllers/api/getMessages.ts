@@ -1,8 +1,8 @@
-import { RequestHandler } from 'express';
-import { manager } from '@services/chat';
-import { ChatNotFound, NotJoinedChat } from '@utils/errors';
-import { validateParams } from '@utils/validation';
-import type { Chat, Message } from '@controllers/types';
+import type { RequestHandler } from 'express';
+import { manager } from '@/services/chat';
+import { ChatNotFound, NotJoinedChat } from '@/utils/errors';
+import { getTokenData, validateParams } from '@/utils/validation';
+import type { Chat, Message } from '@/controllers/types';
 
 export const DIRECTIONS = {
   PREV: 'PREV',
@@ -25,11 +25,12 @@ type Output = {
 
 export const getMessages: RequestHandler<Record<string, never>, Output, Input> = async (req, res) => {
   const { chatId, lastMessageId, direction } = validateParams<Input>(req);
+  const { id: userId } = getTokenData(req);
 
   const chat = manager.getChat(chatId);
 
   if (chat) {
-    const messages = await chat.getMessages(req.session.userId as string, lastMessageId, DIRECTION_MAP[direction]);
+    const messages = await chat.getMessages(userId, lastMessageId, DIRECTION_MAP[direction]);
 
     if (messages === null) {
       throw new NotJoinedChat();

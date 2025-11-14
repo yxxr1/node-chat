@@ -1,7 +1,6 @@
-import { manager, CHAT_SUBSCRIBE_TYPES } from '@services/chat';
-import type { Chat, Message } from '@controllers/types';
-import type { WatcherId } from '@services/chat/types';
-import { WSConnectionManager } from '../manager';
+import { manager, CHAT_SUBSCRIBE_TYPES } from '@/services/chat';
+import type { Chat, Message } from '@/controllers/types';
+import type { WSConnectionManager } from '../manager';
 import type { SubscribedChatMessage, WSMessageHandler } from '../types';
 
 export type SubscribePayload = {
@@ -15,7 +14,7 @@ type Context = {
 
 export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
   { chatId, lastMessageId },
-  { userId },
+  { id: userId, sessionId },
   ws,
   { connectionManager },
 ) => {
@@ -42,11 +41,11 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
       }
 
       const unsubscribeWatcher = () => {
-        chat.unsubscribe(watcherId as WatcherId);
+        chat.unsubscribe(watcherId as string);
       };
 
       const watcherId = await chat.subscribeIfJoined(
-        userId,
+        CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES,
         ({ payload }) => {
           const message: SubscribedChatMessage = {
             type: 'SUBSCRIBED_CHAT',
@@ -55,7 +54,7 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
 
           ws.send(JSON.stringify(message));
         },
-        CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES,
+        { userId, sessionId },
         () => {
           ws.removeEventListener('error', unsubscribeWatcher);
           ws.removeEventListener('close', unsubscribeWatcher);

@@ -1,8 +1,8 @@
-import { RequestHandler } from 'express';
-import { manager } from '@services/chat';
-import { ChatNotFound, NotJoinedChat } from '@utils/errors';
-import { validateParams } from '@utils/validation';
-import type { Chat } from '@controllers/types';
+import type { RequestHandler } from 'express';
+import { manager } from '@/services/chat';
+import { ChatNotFound, NotJoinedChat } from '@/utils/errors';
+import { getTokenData, validateParams } from '@/utils/validation';
+import type { Chat } from '@/controllers/types';
 
 type Input = {
   chatId: Chat['id'];
@@ -13,11 +13,12 @@ type Output = {
 
 export const quitChat: RequestHandler<Record<string, never>, Output, Input> = async (req, res) => {
   const { chatId } = validateParams<Input>(req);
+  const { id: userId } = getTokenData(req);
 
   const chat = manager.getChat(chatId);
 
   if (chat) {
-    const count = await chat.quit(req.session.userId as string, req.session.name as string);
+    const count = await chat.quit(userId);
 
     if (count === null) {
       throw new NotJoinedChat();

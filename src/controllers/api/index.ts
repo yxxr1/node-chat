@@ -1,4 +1,7 @@
-export { auth } from './auth';
+export { registration } from './registration';
+export { login } from './login';
+export { logout } from './logout';
+export { refreshToken } from './refreshToken';
 export { getChats } from './getChats';
 export { createChat } from './createChat';
 export { chatsSubscribe } from './chatsSubscribe';

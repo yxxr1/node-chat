@@ -1,15 +1,16 @@
 import { Router } from 'express';
-import { checkSessionMiddleware, sseMiddleware } from '@middleware';
-import { getIdChain } from '@utils/validation';
-import { asyncHandler } from '@utils/errors';
-import { chatsSubscribeSSE, subscribeSSE } from '@controllers/sse';
+import { authByRefreshTokenMiddleware } from '@/middleware/auth';
+import { sseMiddleware } from '@/middleware/sse';
+import { getIdChain } from '@/utils/validation';
+import { asyncHandler } from '@/utils/errors';
+import { chatsSubscribeSSE, subscribeSSE } from '@/controllers/sse';
 
 export const router = Router();
 
-router.get('/chats-subscribe', checkSessionMiddleware, sseMiddleware, chatsSubscribeSSE);
+router.get('/chats-subscribe', authByRefreshTokenMiddleware, sseMiddleware, chatsSubscribeSSE);
 router.get(
   '/subscribe',
-  checkSessionMiddleware,
+  authByRefreshTokenMiddleware,
   sseMiddleware,
   getIdChain('chatId', 'query'),
   getIdChain('lastMessageId', 'query').optional(),

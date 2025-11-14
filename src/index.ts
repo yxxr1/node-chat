@@ -2,31 +2,16 @@ import 'dotenv/config';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
-import session from 'express-session';
-import mongoSession from 'connect-mongodb-session';
 import expressWs from 'express-ws';
-import { COMMON_CONFIG } from '@config/common';
-import { corsMiddleware, errorMiddleware, checkQuery } from '@middleware';
-import { router as apiRouter } from '@routes/api';
-import { router as sseRouter } from '@routes/sse';
-import { manager } from '@services/chat';
-import { SyncManager } from '@services/chatSync';
+import { COMMON_CONFIG } from '@/config/common';
+import { corsMiddleware } from '@/middleware/cors';
+import { errorMiddleware } from '@/middleware/error';
+import { checkQuery } from '@/middleware/check-query';
+import { router as apiRouter } from '@/routes/api';
+import { router as sseRouter } from '@/routes/sse';
+import { manager } from '@/services/chat';
+import { ChatSyncService } from '@/services/chatSync';
 import './types';
-
-const MongoDBStore = mongoSession(session);
-const store = new MongoDBStore(
-  {
-    uri: COMMON_CONFIG.MONGO_URL,
-    databaseName: COMMON_CONFIG.MONGO_DB_NAME,
-    collection: 'userSessions',
-  },
-  (err) => {
-    if (err) {
-      console.error('Error connection to MongoDB: ', err);
-      process.exit(1);
-    }
-  },
-);
 
 const app = express();
 const { app: wsApp } = expressWs(app);
@@ -35,13 +20,12 @@ app.use(checkQuery);
 
 app.use(bodyParser.json({ limit: '10kb' }));
 app.use(cookieParser());
-app.use(session({ secret: COMMON_CONFIG.SESSION_SECRET, saveUninitialized: false, resave: false, store }));
 
 app.use(corsMiddleware);
 
 app.use('/api', apiRouter);
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-wsApp.use('/ws', require('@routes/ws').router);
+wsApp.use('/ws', require('@/routes/ws').router);
 app.use('/sse', sseRouter);
 
 app.use(errorMiddleware);
@@ -50,7 +34,7 @@ manager
   .initChats()
   .then(() => {
     if (COMMON_CONFIG.REDIS_URL) {
-      const syncManager = new SyncManager(manager, COMMON_CONFIG.REDIS_URL, COMMON_CONFIG.REDIS_CHANNEL_NAME);
+      const syncManager = new ChatSyncService(manager, COMMON_CONFIG.REDIS_URL, COMMON_CONFIG.REDIS_CHANNEL_NAME);
       return syncManager.initSync();
     }
   })

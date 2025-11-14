@@ -1,10 +1,11 @@
 import { nanoid } from 'nanoid';
-import { chatsModel } from '@model';
-import type { Message as MessageType, Chat as ChatType } from '@model/types';
-import { MESSAGES_PAGE_SIZE } from '@const/limits';
+import { chatsModel } from '@/model/chats';
+import type { Message as MessageType, Chat as ChatType } from '@/model/chats';
+import { userModel } from '@/model/user';
+import { MESSAGES_PAGE_SIZE } from '@/const/limits';
 import { Subscribable } from './subscribable';
 import { Message, SERVICE_TYPES } from './message';
-import type { UserId, WatcherId, SubscribeAction, CallbackForAction, WildcardSubscribeType, ChatEntity } from './types';
+import type { UserId, WatcherId, SubscribeAction, CallbackForAction, WildcardSubscribeType, ChatEntity, WatcherMeta } from './types';
 
 export const CHAT_SUBSCRIBE_TYPES = {
   NEW_MESSAGES: 'NEW_MESSAGES',
@@ -23,7 +24,7 @@ export type ChatChatUpdatedSubscribeAction = SubscribeAction<
 >;
 export type ChatSubscribeActions = ChatNewMessagesSubscribeAction | ChatChatUpdatedSubscribeAction;
 
-export class Chat extends Subscribable<ChatSubscribeActions> {
+export class Chat extends Subscribable<ChatSubscribeActions, WatcherMeta> {
   id: string;
 
   constructor(id?: string) {
@@ -56,47 +57,53 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
   }
 
   async subscribeIfJoined<SubscribeType extends ChatSubscribeActions['type'] | WildcardSubscribeType>(
-    userId: UserId,
-    callback: CallbackForAction<ChatSubscribeActions, SubscribeType>,
     type: SubscribeType,
+    callback: CallbackForAction<ChatSubscribeActions, SubscribeType>,
+    meta: Required<WatcherMeta>,
     onUnsubscribed?: () => void,
   ): Promise<WatcherId | null> {
-    if (await this.isJoined(userId)) {
-      return super.subscribe(userId, callback, type, onUnsubscribed);
+    if (await this.isJoined(meta.userId)) {
+      return super.subscribe(type, callback, meta, onUnsubscribed);
     }
 
     return null;
   }
 
-  async join(userId: UserId, userName: string): Promise<boolean> {
+  async join(userId: UserId): Promise<boolean> {
     if (await this.isJoined(userId)) {
       return false;
     }
 
     await chatsModel.addUserToChat(this.id, userId);
 
-    this._broadcast({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
-    await this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_JOINED);
+    this._broadcast(CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED, { chatId: this.id, onlyForJoined: true });
+    const user = await userModel.getUser(userId);
+    const message = new Message(null, userId, user?.username || '', SERVICE_TYPES.CHAT_JOINED);
+    await this._addMessage(message);
 
     return true;
   }
 
-  async publish(text: string, fromId: UserId, fromName: string): Promise<MessageType | null> {
+  async publish(text: string, fromId: UserId): Promise<MessageType | null> {
     if (await this.isJoined(fromId)) {
-      return this._addMessage(text, fromId, fromName);
+      const user = await userModel.getUser(fromId);
+      const message = new Message(text, fromId, user?.username || '');
+      return this._addMessage(message);
     }
 
     return null;
   }
 
-  async quit(userId: UserId, userName: string): Promise<number | null> {
+  async quit(userId: UserId): Promise<number | null> {
     if (await this.isJoined(userId)) {
       await chatsModel.removeUserFromChat(this.id, userId);
 
-      this.closeUserWatchers(userId);
+      this.closeWatchersByMetaKey('userId', userId);
 
-      this._broadcast({ chatId: this.id, onlyForJoined: true }, CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED);
-      await this._addMessage(null, userId, userName, SERVICE_TYPES.CHAT_LEFT);
+      this._broadcast(CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED, { chatId: this.id, onlyForJoined: true });
+      const user = await userModel.getUser(userId);
+      const message = new Message(null, userId, user?.username || '', SERVICE_TYPES.CHAT_LEFT);
+      await this._addMessage(message);
 
       return chatsModel.getChatJoinedUsersCount(this.id);
     }
@@ -128,14 +135,13 @@ export class Chat extends Subscribable<ChatSubscribeActions> {
     };
   }
 
-  async _addMessage(...messageParams: ConstructorParameters<typeof Message>): Promise<MessageType> {
+  async _addMessage(message: Message): Promise<MessageType> {
     const lastMessage = await chatsModel.getLastMessage(this.id);
     const index = lastMessage ? lastMessage.index + 1 : 0;
-    const message = new Message(...messageParams);
     message.setIndex(index);
     await chatsModel.addMessage(this.id, message);
 
-    this._broadcast({ chatId: this.id, messages: [message] }, CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES);
+    this._broadcast(CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES, { chatId: this.id, messages: [message] });
 
     return message;
   }

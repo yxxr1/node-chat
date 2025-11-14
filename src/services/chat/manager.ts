@@ -1,9 +1,9 @@
-import { chatsModel } from '@model';
-import { MAIN_CHAT_NAME } from '@const/common';
+import { chatsModel } from '@/model/chats';
+import { MAIN_CHAT_NAME } from '@/const/common';
 import { Subscribable } from './subscribable';
 import { Chat, CHAT_SUBSCRIBE_TYPES } from './chat';
 import type { ChatChatUpdatedSubscribeAction } from './chat';
-import type { UserId, SubscribeAction, ChatEntity } from './types';
+import type { UserId, SubscribeAction, ChatEntity, WatcherMeta } from './types';
 
 export const MANAGER_SUBSCRIBE_TYPES = {
   CHAT_LIST_UPDATED: 'CHAT_LIST_UPDATED',
@@ -21,7 +21,7 @@ export type ManagerChatUpdatedSubscribeAction = SubscribeAction<
 >;
 export type ManagerSubscribeActions = ManagerChatListUpdatedSubscribeAction | ManagerChatUpdatedSubscribeAction;
 
-export class Manager extends Subscribable<ManagerSubscribeActions> {
+export class Manager extends Subscribable<ManagerSubscribeActions, WatcherMeta> {
   chats: Chat[] = [];
 
   async initChats() {
@@ -52,20 +52,16 @@ export class Manager extends Subscribable<ManagerSubscribeActions> {
 
   async addChat(chat: Chat, broadcastExtra?: Record<string, unknown>): Promise<void> {
     this.chats.push(chat);
-    chat.subscribe(
-      null,
-      ({ payload }) => {
-        this._broadcast(payload, MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED);
-      },
-      CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED,
-    );
+    chat.subscribe(CHAT_SUBSCRIBE_TYPES.CHAT_UPDATED, ({ payload }) => {
+      this._broadcast(MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED, payload);
+    });
 
     this._broadcast(
+      MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED,
       {
         newChats: [await chat.getChatEntity(null, false)],
         deletedChatsIds: [],
       },
-      MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED,
       broadcastExtra,
     );
   }
@@ -78,7 +74,7 @@ export class Manager extends Subscribable<ManagerSubscribeActions> {
 
       if (chat) {
         await chat._closeChat();
-        this._broadcast({ deletedChatsIds: [chatId], newChats: [] }, MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED, broadcastExtra);
+        this._broadcast(MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED, { deletedChatsIds: [chatId], newChats: [] }, broadcastExtra);
         this.chats = this.chats.filter((item) => item !== chat);
       }
     }
