@@ -38,13 +38,19 @@ export class Chat extends Subscribable<ChatSubscribeActions, WatcherMeta> {
 
     if (!chatWithName) {
       const newChat = new Chat();
+      let messages: MessageType[] = [];
+
+      if (creatorId) {
+        const user = await userModel.getUser(creatorId);
+        messages = [new Message(null, creatorId, user?.username || '', SERVICE_TYPES.CHAT_CREATED).setIndex(0)];
+      }
 
       await chatsModel.createChat({
         id: newChat.id,
         creatorId: creatorId,
         name: name,
         joinedUsers: [],
-        messages: [],
+        messages,
       });
 
       return newChat;

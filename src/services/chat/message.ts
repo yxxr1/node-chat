@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid';
 import moment from 'moment';
 
 export const SERVICE_TYPES = {
+  CHAT_CREATED: 0,
   CHAT_JOINED: 1,
   CHAT_LEFT: 2,
 };
@@ -12,7 +13,7 @@ export class Message {
   fromId: string;
   fromName: string | null;
   date: number;
-  service?: number;
+  service: number | null;
   index: number;
 
   constructor(text: string | null, fromId: string, fromName: string, service?: number) {
@@ -20,12 +21,14 @@ export class Message {
     this.text = text;
     this.fromId = fromId;
     this.fromName = fromName;
-    this.service = service;
+    this.service = service ?? null;
     this.date = moment().valueOf();
     this.index = -1;
   }
 
   setIndex(index: number) {
     this.index = index;
+
+    return this;
   }
 }

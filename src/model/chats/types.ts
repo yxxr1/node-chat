@@ -4,7 +4,7 @@ export interface Message {
   fromId: string;
   fromName: string | null;
   date: number;
-  service?: number;
+  service: number | null;
   index: number;
 }
 
