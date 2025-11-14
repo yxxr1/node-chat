@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid';
 import moment from 'moment';
 
 export const SERVICE_TYPES = {
+  CHAT_CREATED: 0,
   CHAT_JOINED: 1,
   CHAT_LEFT: 2,
 };
@@ -27,5 +28,7 @@ export class Message {
 
   setIndex(index: number) {
     this.index = index;
+
+    return this;
   }
 }
