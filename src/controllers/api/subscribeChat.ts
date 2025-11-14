@@ -14,7 +14,7 @@ type Output = SubscribedChatPayload;
 
 export const subscribeChat: RequestHandler<Record<string, never>, Output, Input> = async (req, res) => {
   const { chatId, lastMessageId } = validateParams<Input>(req);
-  const { id: userId } = getTokenData(req);
+  const { id: userId, sessionId } = getTokenData(req);
 
   const chat = manager.getChat(chatId);
 
@@ -33,13 +33,13 @@ export const subscribeChat: RequestHandler<Record<string, never>, Output, Input>
       let timerId: NodeJS.Timeout;
 
       const watcherId = await chat.subscribeIfJoined(
-        userId,
+        CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES,
         ({ payload }) => {
           clearTimeout(timerId);
           res.json(payload);
           chat.unsubscribe(watcherId as string);
         },
-        CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES,
+        { userId, sessionId },
         () => {
           clearTimeout(timerId);
           res.json({ chatId, messages: [] });

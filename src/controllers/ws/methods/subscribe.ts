@@ -14,7 +14,7 @@ type Context = {
 
 export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
   { chatId, lastMessageId },
-  { id: userId },
+  { id: userId, sessionId },
   ws,
   { connectionManager },
 ) => {
@@ -45,7 +45,7 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
       };
 
       const watcherId = await chat.subscribeIfJoined(
-        userId,
+        CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES,
         ({ payload }) => {
           const message: SubscribedChatMessage = {
             type: 'SUBSCRIBED_CHAT',
@@ -54,7 +54,7 @@ export const subscribe: WSMessageHandler<SubscribePayload, Context> = async (
 
           ws.send(JSON.stringify(message));
         },
-        CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES,
+        { userId, sessionId },
         () => {
           ws.removeEventListener('error', unsubscribeWatcher);
           ws.removeEventListener('close', unsubscribeWatcher);

@@ -8,7 +8,7 @@ import { getMessageHandler } from './utils';
 
 export const wsHandler: WebsocketRequestHandler = async (ws, req) => {
   const tokenData = getTokenData(req);
-  const { id: userId } = tokenData;
+  const { id: userId, sessionId } = tokenData;
 
   const connectionManager = new WSConnectionManager();
 
@@ -45,7 +45,7 @@ export const wsHandler: WebsocketRequestHandler = async (ws, req) => {
   };
 
   const managerDefaultWatcherId = manager.subscribe(
-    userId,
+    MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED,
     ({ payload }) => {
       const message: WatchChatsMessage = {
         type: 'WATCH_CHATS',
@@ -54,7 +54,7 @@ export const wsHandler: WebsocketRequestHandler = async (ws, req) => {
 
       ws.send(JSON.stringify(message));
     },
-    MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED,
+    { userId, sessionId },
     () => {
       ws.removeEventListener('error', defaultUnsubscribeWatcher);
       ws.removeEventListener('close', defaultUnsubscribeWatcher);
@@ -62,7 +62,7 @@ export const wsHandler: WebsocketRequestHandler = async (ws, req) => {
   );
 
   const managerChatUpdatedWatcherId = manager.subscribe(
-    userId,
+    MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED,
     async ({ payload }) => {
       const { chatId, onlyForJoined } = payload;
 
@@ -77,7 +77,7 @@ export const wsHandler: WebsocketRequestHandler = async (ws, req) => {
         ws.send(JSON.stringify(message));
       }
     },
-    MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED,
+    { userId, sessionId },
     () => {
       ws.removeEventListener('error', chatUpdatedUnsubscribeWatcher);
       ws.removeEventListener('close', chatUpdatedUnsubscribeWatcher);

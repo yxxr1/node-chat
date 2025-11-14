@@ -9,7 +9,7 @@ type Output = WatchChatsPayload;
 const emptyResponse = { newChats: [], deletedChatsIds: [], updatedChats: [] };
 
 export const chatsSubscribe: RequestHandler<Record<string, never>, Output, void> = async (req, res) => {
-  const { id: userId } = getTokenData(req);
+  const { id: userId, sessionId } = getTokenData(req);
 
   const timerId = setTimeout(() => {
     res.json(emptyResponse);
@@ -32,16 +32,16 @@ export const chatsSubscribe: RequestHandler<Record<string, never>, Output, void>
   };
 
   const defaultWatcherId = manager.subscribe(
-    userId,
+    MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED,
     ({ payload }) => {
       closeQuery({ ...payload, updatedChats: [] });
     },
-    MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED,
+    { userId, sessionId },
     () => closeQuery(emptyResponse),
   );
 
   const chatUpdatedWatcherId = manager.subscribe(
-    userId,
+    MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED,
     async ({ payload }) => {
       const { chatId, onlyForJoined } = payload;
 
@@ -51,7 +51,7 @@ export const chatsSubscribe: RequestHandler<Record<string, never>, Output, void>
         closeQuery({ updatedChats: [await chat.getChatEntity(userId, false)], newChats: [], deletedChatsIds: [] });
       }
     },
-    MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED,
+    { userId, sessionId },
     () => closeQuery(emptyResponse),
   );
 };

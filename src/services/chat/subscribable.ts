@@ -1,6 +1,5 @@
 import { nanoid } from 'nanoid';
 import type {
-  UserId,
   WatcherId,
   WatchersDictionary,
   SubscribeAction,
@@ -12,18 +11,18 @@ import type {
 
 const WILDCARD_TYPE: WildcardSubscribeType = '*';
 
-export class Subscribable<Actions extends SubscribeAction> {
-  _watchers: WatchersDictionary = {};
+export class Subscribable<Actions extends SubscribeAction, Meta extends Record<string, string>> {
+  _watchers: WatchersDictionary<Meta> = {};
 
   subscribe<SubscribeType extends Actions['type'] | WildcardSubscribeType>(
-    userId: UserId | null,
-    callback: CallbackForAction<Actions, SubscribeType>,
     type: SubscribeType,
+    callback: CallbackForAction<Actions, SubscribeType>,
+    meta?: Meta,
     onUnsubscribed?: () => void,
   ): WatcherId {
     const id = nanoid();
 
-    this._watchers[id] = { id, userId, callback: callback as WatcherCallback, type, onUnsubscribed };
+    this._watchers[id] = { id, type, callback: callback as WatcherCallback, meta, onUnsubscribed };
 
     return id;
   }
@@ -32,11 +31,11 @@ export class Subscribable<Actions extends SubscribeAction> {
     delete this._watchers[watcherId];
   }
 
-  closeUserWatchers(userId: UserId | null): void {
+  closeWatchersByMetaKey(key: keyof Meta, value: string): void {
     for (const id in this._watchers) {
-      const { userId: watcherUserId, onUnsubscribed } = this._watchers[id];
+      const { meta, onUnsubscribed } = this._watchers[id];
 
-      if (watcherUserId === userId) {
+      if (meta && meta[key] === value) {
         onUnsubscribed?.();
         this.unsubscribe(id);
       }
@@ -53,8 +52,8 @@ export class Subscribable<Actions extends SubscribeAction> {
   }
 
   _broadcast<BroadcastType extends Actions['type']>(
-    payload: PayloadForAction<Actions, BroadcastType>,
     type: BroadcastType,
+    payload: PayloadForAction<Actions, BroadcastType>,
     extra?: Record<string, unknown>,
   ): void {
     for (const id in this._watchers) {

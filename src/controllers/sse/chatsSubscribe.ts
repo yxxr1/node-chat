@@ -6,7 +6,7 @@ import { getTokenData } from '@/utils/validation';
 type SSEData = WatchChatsPayload;
 
 export const chatsSubscribeSSE: RequestHandler<Record<string, never>, string> = (req, res) => {
-  const { id: userId } = getTokenData(req);
+  const { id: userId, sessionId } = getTokenData(req);
 
   res.on('close', () => {
     manager.unsubscribe(defaultWatcherId);
@@ -18,16 +18,16 @@ export const chatsSubscribeSSE: RequestHandler<Record<string, never>, string> = 
   };
 
   const defaultWatcherId = manager.subscribe(
-    userId,
+    MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED,
     ({ payload }) => {
       writeToUser({ ...payload, updatedChats: [] });
     },
-    MANAGER_SUBSCRIBE_TYPES.CHAT_LIST_UPDATED,
+    { userId, sessionId },
     () => res.end(),
   );
 
   const chatUpdatedWatcherId = manager.subscribe(
-    userId,
+    MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED,
     async ({ payload }) => {
       const { chatId, onlyForJoined } = payload;
 
@@ -37,7 +37,7 @@ export const chatsSubscribeSSE: RequestHandler<Record<string, never>, string> = 
         writeToUser({ updatedChats: [await chat.getChatEntity(userId, false)], newChats: [], deletedChatsIds: [] });
       }
     },
-    MANAGER_SUBSCRIBE_TYPES.CHAT_UPDATED,
+    { userId, sessionId },
     () => res.end(),
   );
 };

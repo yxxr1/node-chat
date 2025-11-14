@@ -18,15 +18,20 @@ export type PayloadForAction<Actions extends SubscribeAction, ActionType extends
   { type: ActionType }
 >['payload'];
 
-export type ConnectionRecord = {
+export type ConnectionRecord<Meta extends Record<string, string>> = {
   id: WatcherId;
-  callback: WatcherCallback;
-  onUnsubscribed?: () => void;
-  userId: UserId | null;
   type: string | WildcardSubscribeType;
+  callback: WatcherCallback;
+  meta?: Meta;
+  onUnsubscribed?: () => void;
 };
-export type WatchersDictionary = {
-  [watcherId: WatcherId]: ConnectionRecord;
+export type WatchersDictionary<Meta extends Record<string, string>> = {
+  [watcherId: WatcherId]: ConnectionRecord<Meta>;
+};
+
+export type WatcherMeta = {
+  userId: string;
+  sessionId: string;
 };
 
 export type ChatEntity = Pick<ChatType, 'id' | 'name' | 'messages'> & {

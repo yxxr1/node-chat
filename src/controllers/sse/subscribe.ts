@@ -16,7 +16,7 @@ type SSEData = SubscribedChatPayload;
 export const subscribeSSE: RequestHandler<Record<string, never>, string, GetInput> = async (req, res) => {
   const { chatId, lastMessageId: lastMessageIdParam, ...rest } = validateParams<GetInput & Headers>(req);
   const lastMessageId: string | undefined = rest['last-event-id'] || lastMessageIdParam;
-  const { id: userId } = getTokenData(req);
+  const { id: userId, sessionId } = getTokenData(req);
 
   const chat = manager.getChat(chatId);
 
@@ -45,11 +45,11 @@ export const subscribeSSE: RequestHandler<Record<string, never>, string, GetInpu
   })();
 
   const watcherId = await chat.subscribeIfJoined(
-    userId,
+    CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES,
     ({ payload }) => {
       writeToUser(payload);
     },
-    CHAT_SUBSCRIBE_TYPES.NEW_MESSAGES,
+    { userId, sessionId },
     () => res.end(),
   );
 

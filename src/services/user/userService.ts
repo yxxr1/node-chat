@@ -26,7 +26,8 @@ export class UserService {
 
     await userModel.createUser(user);
 
-    const tokens = tokenService.generateTokens<UserDto>(new UserDto(user));
+    const sessionId = nanoid();
+    const tokens = tokenService.generateTokens<UserDto>(new UserDto(user, sessionId));
     await tokenModel.saveToken(tokens.refreshToken, user.id);
 
     return {
@@ -42,7 +43,8 @@ export class UserService {
       const { passwordHash, ...user } = userRecord;
 
       if (bcrypt.compareSync(password, passwordHash)) {
-        const tokens = tokenService.generateTokens<UserDto>(new UserDto(user));
+        const sessionId = nanoid();
+        const tokens = tokenService.generateTokens<UserDto>(new UserDto(user, sessionId));
         await tokenModel.saveToken(tokens.refreshToken, user.id);
 
         return {
@@ -64,7 +66,8 @@ export class UserService {
     }
 
     await tokenModel.deleteToken(refreshToken);
-    const tokens = tokenService.generateTokens<UserDto>(new UserDto(data));
+    const { sessionId, ...user } = data;
+    const tokens = tokenService.generateTokens<UserDto>(new UserDto(user, sessionId));
     await tokenModel.saveToken(tokens.refreshToken, data.id);
 
     return tokens;
@@ -78,7 +81,8 @@ export class UserService {
     }
 
     await tokenModel.deleteToken(refreshToken);
-    manager.closeUserWatchers(data.id);
+    manager.closeWatchersByMetaKey('sessionId', data.sessionId);
+    manager.chats.forEach((chat) => chat.closeWatchersByMetaKey('sessionId', data.sessionId));
   }
 }
 
